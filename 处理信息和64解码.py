@@ -38,7 +38,7 @@ def ReadTitleIndexList(linelist):
     return TitleIndexList
 
 
-lines=ReadMapFile('mfs.yrm');
+lines=ReadMapFile('test233.yrm');
 '''正则化匹配表头'''
 
 #m = p1.match('[IsoMapPack5]');
