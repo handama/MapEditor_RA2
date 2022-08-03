@@ -27,7 +27,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <WarningLevel>0</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -36,6 +36,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Rampastring.Tools">
       <HintPath>references\Rampastring.Tools.dll</HintPath>
     </Reference>
@@ -85,16 +88,22 @@
     <None Include=".vs\VSWorkspaceState.json" />
     <None Include="IsoMapPack5.section" />
     <None Include="mfs.size" />
+    <None Include="packages.config" />
     <None Include="plotreadline.m" />
     <None Include="README.md" />
     <None Include="test233.yrm" />
     <None Include="基于CNCMAPRENNDER开源项目的地图格式研究.docx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbstractMap.cs" />
+    <Compile Include="TileInfo\AbstractTile.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="MapFile.cs" />
     <Compile Include="MapFormat.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="TileInfo\AbstractTileType.cs" />
+    <Compile Include="TileInfo\TileCombination.cs" />
+    <Compile Include="TileInfo\TileCombinationType.cs" />
+    <Compile Include="TileInfo\TileEnum.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="处理信息和64解码.py" />

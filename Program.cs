@@ -7,6 +7,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using Rampastring.Tools;
+using MapEditor.TileInfo;
 
 namespace MapEditor
 {
@@ -14,6 +15,7 @@ namespace MapEditor
     {
         private int Width;
         private int Height;
+        private int MapTheater;
         List<IsoTile> Tile_input_list;
         void CreateIsoTileList(string filePath)
         {
@@ -44,36 +46,26 @@ namespace MapEditor
             var mf = new MemoryFile(isoMapPack);
 
             //Console.WriteLine(BitConverter.ToString(lzoData));
-            int numtiles = 0;
             int count = 0;
             //List<List<IsoTile>> TilesList = new List<List<IsoTile>>(Width * 2 - 1);
             Tile_input_list = new List<IsoTile>();
             //Console.WriteLine(TilesList.Capacity);
             for (int i = 0; i < cells; i++)
             {
-                //TODO 这些值是什么。
                 ushort rx = mf.ReadUInt16();//ushort	0 to 65,535	Unsigned 16-bit integer	System.UInt16
-                //Console.WriteLine($"rx=<rx>");
                 ushort ry = mf.ReadUInt16();
-                //Console.WriteLine("rx={0},ry={0}",rx,ry);
                 short tilenum = mf.ReadInt16();//short	-32,768 to 32,767	Signed 16-bit integer	System.Int16
-                //Console.WriteLine(tilenum);
                 short zero1 = mf.ReadInt16();//Reads a 2-byte signed integer from the current stream and advances the current position of the stream by two bytes.
                 byte subtile = mf.ReadByte();//Reads a byte from the stream and advances the position within the stream by one byte, or returns -1 if at the end of the stream.
                 byte z = mf.ReadByte();
                 byte zero2 = mf.ReadByte();
-                //这是我用来调试的
-                //if (tilenum==49){
-                //  Console.WriteLine("rx={0},ry={1},tilenum={2},subtile={3},z={4}", rx, ry, tilenum, subtile, z); }
-                //一次循环读11 bytes
+
                 count++;
                 int dx = rx - ry + Width - 1;
 
                 int dy = rx + ry - Width - 1;
                 //Console.WriteLine("{1}", rx, ry, tilenum, subtile, z, dx, dy,count);
                 //上面是一个线性变换 旋转45度、拉长、平移
-                numtiles++;//在最后日志用了一下
-                //Console.WriteLine("Hello World 2");
                 if (dx >= 0 && dx < 2 * Width &&
                     dy >= 0 && dy < 2 * Height)
                 {
@@ -81,10 +73,6 @@ namespace MapEditor
 
                     Tiles[(ushort)dx, (ushort)dy / 2] = tile;//给瓷砖赋值
                     Tile_input_list.Add(tile);
-                    // Console.WriteLine("{3}", dx, dy, rx,ry);
-                    //Console.WriteLine("{1}",dx,dy/2,count);
-                    //Console.WriteLine(tile.TileNum);
-                    //Console.WriteLine("Hello World 1");
                 }
             }
             //用来检查有没有空着的
@@ -96,13 +84,12 @@ namespace MapEditor
                                               //isoTile的定义在TileLayer.cs里
                     if (isoTile == null)
                     {
-                        //Console.WriteLine("null x={0},y={1}", x,y);
                         // fix null tiles to blank
                         ushort dx = (ushort)(x);
                         ushort dy = (ushort)(y * 2 + x % 2);
                         ushort rx = (ushort)((dx + dy) / 2 + 1);
                         ushort ry = (ushort)(dy - rx + Width + 1);
-                        Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, 0, 0);//TODO IsoTile有七个参数，定义在112行
+                        Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, 0, 0);
                     }
                 }
 
@@ -113,31 +100,22 @@ namespace MapEditor
         {
             long di = 0;
             int cells = (Width * 2 - 1) * Height;
-            //IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];//这里值得注意
             int lzoPackSize = cells * 11 + 4;
             var isoMapPack2 = new byte[lzoPackSize];
             foreach (var tile in Tile_input_list)
-            {//if (tile != null) { //这里的判断是我加的TODO 为什么会有NULL
-             //但是这样会导致生成的isoMapPack5和原来的不是一种了
-             //Console.WriteLine("{1}", tile.Rx, tile.Ry);
+            {
                 var bs = tile.ToMapPack5Entry().ToArray();//ToMapPack5Entry的定义在MapObjects.cs
                                                           //ToArray将ArrayList转换为Array：
                 Array.Copy(bs, 0, isoMapPack2, di, 11);//把bs复制给isoMapPack,从di索引开始复制11个字节
                 di += 11;//一次循环复制11个字节
-                         // }
             }
 
             var compressed = Format5.Encode(isoMapPack2, 5);
 
             string compressed64 = Convert.ToBase64String(compressed);
-            //Console.WriteLine(compressed64);
             int j = 1;
             int idx = 0;
 
-            /*if (File.Exists(path))
-            {
-                File.Delete(path);
-            }*/
             var saveFile = new IniFile(path);
             saveFile.AddSection(Constants.MapPackName);
             var saveMapPackSection = saveFile.GetSection(Constants.MapPackName);
@@ -151,17 +129,18 @@ namespace MapEditor
             }
             saveFile.WriteIniFile();
         }
-        void SaveWorkingMapPack()
+        void SaveWorkingMapPack(string path)
         {
-            if (File.Exists(Constants.WorkFolder + "mapPack.txt"))
+            if (File.Exists(path))
             {
-                File.Delete(Constants.WorkFolder + "mapPack.txt");
+                File.Delete(path);
             }
-            var mapPack = new IniFile(Constants.WorkFolder + "mapPack.txt");
+            var mapPack = new IniFile(path);
             mapPack.AddSection("mapPack");
             var mapPackSection = mapPack.GetSection("mapPack");
             int mapPackIndex = 1;
             mapPackSection.SetStringValue("0", "Dx,Dy,Rx,Ry,Z,TileNum,SubTile");
+            mapPack.SetStringValue("Map", "Size", Width.ToString() + "," + Height.ToString());
 
             for (int i = 0; i < Tile_input_list.Count; i++)
             {
@@ -175,24 +154,6 @@ namespace MapEditor
                        isoTile.TileNum.ToString() + "," +
                        isoTile.SubTile.ToString());
             }
-
-/*            IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];
-
-            for (ushort y = 0; y < Height; y++)
-            {
-                for (ushort x = 0; x < Width * 2 - 1; x++)
-                {
-                    var isoTile = Tiles[x, y];
-                    mapPackSection.SetStringValue(mapPackIndex++.ToString(),
-                        isoTile.Dx.ToString() + "," +
-                        isoTile.Dy.ToString() + "," +
-                        isoTile.Rx.ToString() + "," +
-                        isoTile.Ry.ToString() + "," +
-                        isoTile.Z.ToString() + "," +
-                        isoTile.TileNum.ToString() + "," +
-                        isoTile.SubTile.ToString());
-                }
-            }*/
             mapPack.WriteIniFile();
         }
 
@@ -203,8 +164,7 @@ namespace MapEditor
             Tile_input_list = new List<IsoTile>();
 
             int cells = (Width * 2 - 1) * Height;
-            IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];//这里值得注意
-            //用来检查有没有空着的
+            IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];
             for (ushort y = 0; y < Height; y++)
             {
                 for (ushort x = 0; x < Width * 2 - 1; x++)
@@ -213,10 +173,9 @@ namespace MapEditor
                     ushort dy = (ushort)(y * 2 + x % 2);
                     ushort rx = (ushort)((dx + dy) / 2 + 1);
                     ushort ry = (ushort)(dy - rx + Width + 1);
-                    Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, -1, 0);//TODO IsoTile有七个参数，定义在112行
+                    Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, (int)Common._000_Empty, 0);
                     Tile_input_list.Add(Tiles[x, y]);
                 }
-
             }
         }
 
@@ -228,8 +187,7 @@ namespace MapEditor
             Tile_input_list = new List<IsoTile>();
 
             int cells = (Width * 2 - 1) * Height;
-            IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];//这里值得注意
-            //用来检查有没有空着的
+            IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];
             for (ushort y = 0; y < Height; y++)
             {
                 for (ushort x = 0; x < Width * 2 - 1; x++)
@@ -252,7 +210,7 @@ namespace MapEditor
                         }
                         else
                         {
-                            drawTile = -1;//grass
+                            drawTile = (int)Common._000_Empty;//grass
                         }
                     }
                     else
@@ -263,10 +221,10 @@ namespace MapEditor
                         }
                         else
                         {
-                            drawTile = -1;//grass
+                            drawTile = (int)Common._000_Empty;//grass
                         }
                     }
-                    Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, (short)drawTile, 0);//TODO IsoTile有七个参数，定义在112行
+                    Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, (short)drawTile, 0);
                     Tile_input_list.Add(Tiles[x, y]);
                 }
             }
@@ -276,28 +234,86 @@ namespace MapEditor
         {
             var fullMap = new IniFile(Constants.TemplateMapPath);
             fullMap.SetStringValue("Map", "Size", "0,0,"+ Width.ToString() + "," + Height.ToString());
-            fullMap.SetStringValue("Map", "LocalSize", "2,4," + (Width - 4).ToString() + "," + (Height - 6).ToString());
+            fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
+            fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
             fullMap.WriteIniFile(path);
             SaveIsoMapPack5(path);
         }
-        List<IsoTile> LoadWorkingMapPack(string filename)
+        void LoadWorkingMapPack(string path)
         {
-            List <IsoTile> mapPackList = new List<IsoTile>();
-            var mapPack = new IniFile(Constants.WorkFolder + "mapPack.txt");
+            Tile_input_list = new List<IsoTile>();
+            var mapPack = new IniFile(path);
             var mapPackSection = mapPack.GetSection("mapPack");
+            string[] size = mapPack.GetStringValue("Map", "Size", "0,0").Split(',');
+            Width = int.Parse(size[0]);
+            Height = int.Parse(size[1]);
 
-            return mapPackList;
+            int i = 1;
+            while (mapPackSection.KeyExists(i.ToString()))
+            {
+                if (mapPackSection.KeyExists(i.ToString()))
+                {
+                    string[] isoTileInfo = mapPackSection.GetStringValue(i.ToString(), "").Split(',');
+                    var isoTile = new IsoTile(ushort.Parse(isoTileInfo[0]),
+                        ushort.Parse(isoTileInfo[1]),
+                        ushort.Parse(isoTileInfo[2]),
+                        ushort.Parse(isoTileInfo[3]),
+                        (byte)int.Parse(isoTileInfo[4]),
+                        short.Parse(isoTileInfo[5]),
+                        (byte)int.Parse(isoTileInfo[6]));
+                    Tile_input_list.Add(isoTile);
+                    i++;
+                }
+            }
         }
         static void Main(string[] args)
         {
             var _instance = new Program();
+            var absMap = new AbstractMap();
+
+
+
+            absMap.Initialize(100, 100, Theater.TEMPERATE);
+            int range = absMap.Width + absMap.Height;
+            absMap.PlaceTileCombination(295, 100, 100);
+            absMap.RandomPlaceTileCombination(5000);
+
+/*            for (int i = 0; i < range; i++)
+            {
+                for (int j = 0; j < range; j++)
+                {
+                    absMap.PlaceTileCombination(311, i, j);
+                }
+            }*/
+
+
+
+
+            _instance.Width = absMap.Width;
+            _instance.Height = absMap.Height;
+            _instance.MapTheater = absMap.Theater;
+            _instance.Tile_input_list = absMap.CreateTileList();
+            _instance.SaveFullMap(Constants.FilePath);
+
+            //Console.WriteLine("press any key to exist...");
+            //Console.ReadKey();
+
 
             //_instance.CreateEmptyMap(80, 80);
-            _instance.CreateMapbyBitMap(Constants.BitMapPath);
-            //_instance.CreateIsoTileList(Constants.FilePath);
-            _instance.SaveFullMap(Constants.FilePath);
-            //_instance.SaveIsoMapPack5();
+
             //_instance.SaveWorkingMapPack();
+
+
+            //_instance.CreateIsoTileList(Constants.FilePath);
+            //_instance.SaveWorkingMapPack(Constants.WorkFolder + "mapPack.txt");
+
+            //_instance.LoadWorkingMapPack(Constants.WorkFolder + "mapPack.txt");
+            //_instance.SaveFullMap(Constants.FilePath);
+
+
+            //bit2yrm
+            //_instance.CreateMapbyBitMap(Constants.BitMapPath);
+            //_instance.SaveFullMap(Constants.FilePath);
         }
     }
 }
