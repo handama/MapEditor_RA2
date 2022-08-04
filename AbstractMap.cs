@@ -7,20 +7,21 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IO;
+using Weighted_Randomizer;
 
 namespace MapEditor
 {
-    public class AbstractMap
+    public static class AbstractMap
     {
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-        public int[] Size { get; private set; }
-        public AbstractTile[,] AbsTile { get; private set; }
-        public int Theater { get; private set; }
-        public List<TileCombination> TileCombinationList { get; private set; }
-        public List<TileCombinationType> TileCombinationTypeList { get; private set; }
+        public static int Width { get; private set; }
+        public static int Height { get; private set; }
+        public static int[] Size { get; private set; }
+        public static AbstractTile[,] AbsTile { get; private set; }
+        public static int Theater { get; private set; }
+        public static List<TileCombination> TileCombinationList { get; private set; }
+        public static List<TileCombinationType> TileCombinationTypeList { get; private set; }
 
-        public void Initialize(int width, int height, Theater theater)
+        public static void Initialize(int width, int height, Theater theater)
         {
             Width = width;
             Height = height;
@@ -36,7 +37,7 @@ namespace MapEditor
                 for (int x = 0; x < range; x++)
                 {
                     var absTile = new AbstractTile();
-                    absTile.Initialize(x, y, this);
+                    absTile.Initialize(x, y);
                     AbsTile[x, y] = absTile;
                 }
             }
@@ -44,7 +45,7 @@ namespace MapEditor
             SterilizeTileCombination();
         }
 
-        public void SterilizeTileCombination()
+        public static void SterilizeTileCombination()
         {
             string JsonName;
             if (Theater == 0)
@@ -72,7 +73,7 @@ namespace MapEditor
                 TileCombinationTypeList.Add(tileCombinationType);
             }
         }
-        public void PlaceTileCombination(int tileNum, int x, int y, int z = 0)
+        public static void PlaceTileCombination(int tileNum, int x, int y, int z = 0, string direction = "")
         {
             var tileCombinationType = new TileCombinationType();
             foreach (var pTileCombinationType in TileCombinationTypeList)
@@ -101,17 +102,27 @@ namespace MapEditor
                     if (absTileType.Used)
                     {
                         var absTile = new AbstractTile();
-                        absTile.SetProperty(x + i, y + j, z, this, absTileType);
+                        absTile.SetProperty(x + i, y + j, z, absTileType);
                         AbsTile[x + i, y + j] = absTile;
                     }
                 }
             }
             var tileCombination = new TileCombination();
-            tileCombination.Initialize(x, y, AbsTile[x, y].Z, tileNum, this);
+            tileCombination.Initialize(x, y, AbsTile[x, y].Z, tileNum);
+
+            if (direction.Equals("NE"))
+                tileCombination.NEConnected = true;
+            else if (direction.Equals("NW"))
+                tileCombination.NWConnected = true;
+            else if (direction.Equals("SW"))
+                tileCombination.SWConnected = true;
+            else if (direction.Equals("SE"))
+                tileCombination.SEConnected = true;
+
             TileCombinationList.Add(tileCombination);
         }
 
-        public int[,] GetConnectOptions(string direction, int tileNum)
+        public static int[,] GetConnectOptions(string direction, int tileNum)
         {
             foreach (var pTileCombinationType in TileCombinationTypeList)
             {
@@ -130,84 +141,124 @@ namespace MapEditor
             return null;
         }
 
-        public void PlaceConnectionTC(TileCombination tileCombination, int[] connectOptionInfo)
+        public static void PlaceConnectionTC(TileCombination tileCombination, int[] connectOptionInfo, string direction)
         {
             int tileNum = connectOptionInfo[0];
             int x = connectOptionInfo[1] + tileCombination.X;
             int y = connectOptionInfo[2] + tileCombination.Y;
             int z = connectOptionInfo[3] + tileCombination.Z;
-            PlaceTileCombination(tileNum, x, y, z);
+            string rDirection = "";
+            if (direction.Equals("NE"))
+                rDirection = "SW";
+            else if (direction.Equals("NW"))
+                rDirection = "SE";
+            else if (direction.Equals("SW"))
+                rDirection = "NE";
+            else if (direction.Equals("SE"))
+                rDirection = "NW";
+            PlaceTileCombination(tileNum, x, y, z, rDirection);
         }
 
-        public void RandomPlaceTileCombination(int times)
+        public static void RandomPlaceTileCombination(int times)
         {
-            for (int i = 0; i < times; i++)
+            int i = 0;
+            while (true)
             {
-                var list = TileCombinationList;
-                for (int j = 0; j < list.Count; j++)
+                if (i >= times)
+                    return;
+                i++;
+
+                int minEntropy = int.MaxValue;
+                int minEntropyIndex = 0;
+                for (int j = 0; j < TileCombinationList.Count; j++)
                 {
-                    var tileCombination = list[i];
-                    if (!tileCombination.NEConnected)
+                    if (TileCombinationList[j].NEConnected
+                    && TileCombinationList[j].NWConnected
+                    && TileCombinationList[j].SWConnected
+                    && TileCombinationList[j].SEConnected)
+                        continue;
+
+                    TileCombinationList[j].SetEntropy();
+                    if (TileCombinationList[j].Entropy < minEntropy && TileCombinationList[j].Entropy != 0)
                     {
-                        var options = GetConnectOptions("NE", tileCombination.TileNum);
-                        if (options != null)
-                        {
-                            Random r = new Random(tileCombination.X * tileCombination.Y);
-                            int selectedIndex = r.Next(0, options.GetLength(0));
-                            int[] option = { options[selectedIndex, 0],
-                            options[selectedIndex, 1],
-                            options[selectedIndex, 2],
-                            options[selectedIndex, 3] };
-                            PlaceConnectionTC(tileCombination, option);
-                        }
+                        minEntropy = TileCombinationList[j].Entropy;
+                        minEntropyIndex = j;
                     }
-                    if (!tileCombination.NWConnected)
+                }
+                if (minEntropy == int.MaxValue)
+                    return;
+
+                var tileCombination = TileCombinationList[minEntropyIndex]; 
+                if (!tileCombination.NEConnected)
+                {
+                    var options = GetConnectOptions("NE", tileCombination.TileNum);
+                    if (options != null)
                     {
-                        var options = GetConnectOptions("NW", tileCombination.TileNum);
-                        if (options != null)
-                        {
-                            Random r = new Random((tileCombination.X - tileCombination.Y) * (int)DateTime.Now.ToFileTimeUtc());
-                            int selectedIndex = r.Next(0, options.GetLength(0));
-                            int[] option = { options[selectedIndex, 0],
-                            options[selectedIndex, 1],
-                            options[selectedIndex, 2],
-                            options[selectedIndex, 3] };
-                            PlaceConnectionTC(tileCombination, option);
-                        }
+                        int selectedIndex = GetRandomTCWeighted(options);
+                        int[] option = { options[selectedIndex, 1],
+                        options[selectedIndex, 2],
+                        options[selectedIndex, 3],
+                        options[selectedIndex, 4], };
+                        TileCombinationList[minEntropyIndex].NEConnected = true;
+                        PlaceConnectionTC(tileCombination, option, "NE");
                     }
-                    if (!tileCombination.SEConnected)
+                }
+                if (!tileCombination.NWConnected)
+                {
+                    var options = GetConnectOptions("NW", tileCombination.TileNum);
+                    if (options != null)
                     {
-                        var options = GetConnectOptions("SE", tileCombination.TileNum);
-                        if (options != null)
-                        {
-                            Random r = new Random(tileCombination.X * tileCombination.Y);
-                            int selectedIndex = r.Next(0, options.GetLength(0));
-                            int[] option = { options[selectedIndex, 0],
-                            options[selectedIndex, 1],
-                            options[selectedIndex, 2],
-                            options[selectedIndex, 3] };
-                            PlaceConnectionTC(tileCombination, option);
-                        }
+                        int selectedIndex = GetRandomTCWeighted(options);
+                        int[] option = { options[selectedIndex, 1],
+                        options[selectedIndex, 2],
+                        options[selectedIndex, 3],
+                        options[selectedIndex, 4] };
+                        TileCombinationList[minEntropyIndex].NWConnected = true;
+                        PlaceConnectionTC(tileCombination, option, "NW");
                     }
-                    if (!tileCombination.SWConnected)
+                }
+                if (!tileCombination.SEConnected)
+                {
+                    var options = GetConnectOptions("SE", tileCombination.TileNum);
+                    if (options != null)
                     {
-                        var options = GetConnectOptions("SW", tileCombination.TileNum);
-                        if (options != null)
-                        {
-                            Random r = new Random(tileCombination.X * tileCombination.Y);
-                            int selectedIndex = r.Next(0, options.GetLength(0));
-                            int[] option = { options[selectedIndex, 0],
-                            options[selectedIndex, 1],
-                            options[selectedIndex, 2],
-                            options[selectedIndex, 3] };
-                            PlaceConnectionTC(tileCombination, option);
-                        }
+                        int selectedIndex = GetRandomTCWeighted(options);
+                        int[] option = { options[selectedIndex, 1],
+                        options[selectedIndex, 2],
+                        options[selectedIndex, 3],
+                        options[selectedIndex, 4] };
+                        TileCombinationList[minEntropyIndex].SEConnected = true;
+                        PlaceConnectionTC(tileCombination, option, "SE");
+                    }
+                }
+                if (!tileCombination.SWConnected)
+                {
+                    var options = GetConnectOptions("SW", tileCombination.TileNum);
+                    if (options != null)
+                    {
+                        int selectedIndex = GetRandomTCWeighted(options);
+                        int[] option = { options[selectedIndex, 1],
+                        options[selectedIndex, 2],
+                        options[selectedIndex, 3],
+                        options[selectedIndex, 4] };
+                        TileCombinationList[minEntropyIndex].SWConnected = true;
+                        PlaceConnectionTC(tileCombination, option, "SW");
                     }
                 }
             }
         }
 
-        public List<IsoTile> CreateTileList()
+        public static int GetRandomTCWeighted(int[,] options)
+        {
+            IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
+            for (int i = 0; i < options.GetLength(0); i++)
+            {
+                randomizer.Add(i.ToString(), options[i, 0]);
+            }
+            return int.Parse(randomizer.NextWithReplacement());
+        }
+
+        public static List<IsoTile> CreateTileList()
         {
             var tileList = new List<IsoTile>();
             int range = Width + Height;
@@ -231,7 +282,7 @@ namespace MapEditor
             } 
             return tileList;
         }
-        public string GetFileJson(string filepath)
+        public static string GetFileJson(string filepath)
         {
             string json = string.Empty;
             using (FileStream fs = new FileStream(filepath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using Rampastring.Tools;
 using MapEditor.TileInfo;
+using System.Linq.Expressions;
 
 namespace MapEditor
 {
@@ -269,14 +270,11 @@ namespace MapEditor
         static void Main(string[] args)
         {
             var _instance = new Program();
-            var absMap = new AbstractMap();
 
-
-
-            absMap.Initialize(100, 100, Theater.TEMPERATE);
-            int range = absMap.Width + absMap.Height;
-            absMap.PlaceTileCombination(295, 100, 100);
-            absMap.RandomPlaceTileCombination(5000);
+            AbstractMap.Initialize(100, 100, Theater.TEMPERATE);
+            int range = AbstractMap.Width + AbstractMap.Height;
+            AbstractMap.PlaceTileCombination(295, 100, 100);
+            AbstractMap.RandomPlaceTileCombination(10000);
 
 /*            for (int i = 0; i < range; i++)
             {
@@ -289,14 +287,14 @@ namespace MapEditor
 
 
 
-            _instance.Width = absMap.Width;
-            _instance.Height = absMap.Height;
-            _instance.MapTheater = absMap.Theater;
-            _instance.Tile_input_list = absMap.CreateTileList();
+            _instance.Width = AbstractMap.Width;
+            _instance.Height = AbstractMap.Height;
+            _instance.MapTheater = AbstractMap.Theater;
+            _instance.Tile_input_list = AbstractMap.CreateTileList();
             _instance.SaveFullMap(Constants.FilePath);
 
-            //Console.WriteLine("press any key to exist...");
-            //Console.ReadKey();
+            Console.WriteLine("press any key to exist...");
+            Console.ReadKey();
 
 
             //_instance.CreateEmptyMap(80, 80);
