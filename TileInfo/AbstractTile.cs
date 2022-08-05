@@ -33,6 +33,8 @@ namespace MapEditor
         }
         public void SetProperty(int x, int y, int z, TileInfo.AbstractTileType absTileType)
         {
+            if (absTileType == null)
+                return;
             TileNum = absTileType.TileNum;
             SubTile = absTileType.SubTile;
             Used = absTileType.Used;

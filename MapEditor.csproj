@@ -99,10 +99,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractMap.cs" />
+    <Compile Include="AbstractUnitMap.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="TileInfo\AbstractMapUnit.cs" />
     <Compile Include="TileInfo\AbstractTile.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="MapFormat.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Mapfile.cs" />
     <Compile Include="TileInfo\AbstractTileType.cs" />
     <Compile Include="TileInfo\TileCombination.cs" />
     <Compile Include="TileInfo\TileCombinationType.cs" />

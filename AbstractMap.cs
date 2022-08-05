@@ -20,6 +20,8 @@ namespace MapEditor
         public static int Theater { get; private set; }
         public static List<TileCombination> TileCombinationList { get; private set; }
         public static List<TileCombinationType> TileCombinationTypeList { get; private set; }
+        public static List<AbstractMapUnit> AbstractMapUnitList { get; private set; }
+        public static AbstractUnitMap[,] AbstractUnitMap { get; private set; }
 
         public static void Initialize(int width, int height, Theater theater)
         {
@@ -31,6 +33,8 @@ namespace MapEditor
             Size = new int[2] { Width, Height };
             TileCombinationList = new List<TileCombination>();
             TileCombinationTypeList = new List<TileCombinationType>();
+            AbstractMapUnitList = new List<AbstractMapUnit>();
+            AbstractUnitMap = new AbstractUnitMap [(int)Math.Ceiling((float)range / 15.0), (int)Math.Ceiling((float)range / 15.0)];
 
             for (int y = 0; y < range; y++)
             {
@@ -41,223 +45,452 @@ namespace MapEditor
                     AbsTile[x, y] = absTile;
                 }
             }
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                {
+                    AbstractUnitMap[i, j] = new AbstractUnitMap();
+                }
+            }
 
-            SterilizeTileCombination();
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                {
+                    for (int x = 0; x < 15; x++)
+                    {
+                        for (int y = 0; y < 15; y++)
+                        {
+                            
+                            if (i * 15 + x < range && j * 15 + y < range)
+                            {
+                                if (IsValidAT(i * 15 + x, j * 15 + y))
+                                {
+                                    if (AbsTile[i * 15 + x, j * 15 + y].IsOnMap)
+                                        AbstractUnitMap[i, j].IsOnMap = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!AbstractUnitMap[i, j].IsOnMap)
+                        AbstractUnitMap[i, j].Placed = true;
+
+                    if (IsValidAUM(i,j -1))
+                    {
+                        if (!AbstractUnitMap[i, j - 1].IsOnMap)
+                            AbstractUnitMap[i, j].NEConnected = true;
+                    }
+                    else
+                        AbstractUnitMap[i, j].NEConnected = true;
+
+                    if (IsValidAUM(i, j + 1))
+                    {
+                        if (!AbstractUnitMap[i, j + 1].IsOnMap)
+                            AbstractUnitMap[i, j].SWConnected = true;
+                    }
+                    else
+                        AbstractUnitMap[i, j].SWConnected = true;
+
+                    if (IsValidAUM(i - 1, j))
+                    {
+                        if (!AbstractUnitMap[i - 1, j].IsOnMap)
+                            AbstractUnitMap[i, j].NWConnected = true;
+                    }
+                    else
+                        AbstractUnitMap[i, j].NWConnected = true;
+
+                    if (IsValidAUM(i + 1, j))
+                    {
+                        if (!AbstractUnitMap[i + 1, j].IsOnMap)
+                            AbstractUnitMap[i, j].SEConnected = true;
+                    }
+                    else
+                        AbstractUnitMap[i, j].SEConnected = true;
+                }
+            }
+           
+            //SterilizeTileCombination();
+            SterilizeMapUnit();
+        }
+        public static bool IsValidAUM(int x, int y)
+        {
+            if (x < AbstractUnitMap.GetLength(0) && x >= 0 && y < AbstractUnitMap.GetLength(1) && y >= 0)
+                return true;
+            else
+                return false;
+        }
+        public static bool IsValidAT(int x, int y)
+        {
+            if (x < Width + Height && y < Width + Height && x >= 0 && y >= 0)
+                return true;
+            else
+                return false;
         }
 
-        public static void SterilizeTileCombination()
+        public static void SterilizeMapUnit()
         {
-            string JsonName;
-            if (Theater == 0)
-                JsonName = Constants.TEMPERATEINIPath;
-            else if (Theater == 1)
-                JsonName = Constants.SNOWINIPath;
-            else if (Theater == 2)
-                JsonName = Constants.URBANINIPath;
-            else if (Theater == 3)
-                JsonName = Constants.NEWURBANINIPath;
-            else if (Theater == 4)
-                JsonName = Constants.LUNARINIPath;
-            else if (Theater == 5)
-                JsonName = Constants.DESERTINIPath;
+            string workingPath = "";
+            if (AbstractMap.Theater == 0)
+                workingPath = Constants.TEMPERATEPath;
+            else if (AbstractMap.Theater == 1)
+                workingPath = Constants.SNOWPath;
+            else if (AbstractMap.Theater == 2)
+                workingPath = Constants.URBANPath;
+            else if (AbstractMap.Theater == 3)
+                workingPath = Constants.NEWURBANPath;
+            else if (AbstractMap.Theater == 4)
+                workingPath = Constants.LUNARPath;
+            else if (AbstractMap.Theater == 5)
+                workingPath = Constants.DESERTPath;
             else
                 return;
 
-            string jsonText = GetFileJson(JsonName);
-            JObject jsonObj = JObject.Parse(jsonText);
-
-            foreach (JProperty jProperty in jsonObj.Properties())
+            DirectoryInfo root = new DirectoryInfo(workingPath);
+            foreach (FileInfo f in root.GetFiles())
             {
-                var tileCombinationType = JsonConvert.DeserializeObject<TileCombinationType>(jProperty.Value.ToString());
-                tileCombinationType.InitializeAfterJson();
-                TileCombinationTypeList.Add(tileCombinationType);
+                var absMapUnit = new AbstractMapUnit();
+                absMapUnit.Initialize(f);
+                AbstractMapUnitList.Add(absMapUnit);
             }
         }
-        public static void PlaceTileCombination(int tileNum, int x, int y, int z = 0, string direction = "")
-        {
-            var tileCombinationType = new TileCombinationType();
-            foreach (var pTileCombinationType in TileCombinationTypeList)
-            {
-                if (pTileCombinationType.TileNum == tileNum)
-                    tileCombinationType = pTileCombinationType;
-            }
 
-            for (int i = 0; i < tileCombinationType.Width; i++)
+        public static AbstractMapUnit GetAbstractMapUnitByName(string mapUnitName)
+        {
+            var absMapUnit = new AbstractMapUnit();
+            foreach (var pAbsMapUnit in AbstractMapUnitList)
             {
-                for (int j = 0; j < tileCombinationType.Height; j++)
+                if (mapUnitName == pAbsMapUnit.Name)
                 {
-                    if (x + i >= Width + Height || y + j >= Width + Height|| x + i < 0 || y + j < 0)
-                    {
-                        return;
-                    }
-                    if (AbsTile[x + i, y + j].Edited)
-                        return;
+                    absMapUnit = pAbsMapUnit;
                 }
             }
-            for (int i = 0; i < tileCombinationType.Width; i++)
+            return absMapUnit;
+        }
+        public static AbstractUnitMap[] GetNearbyAbstractUnitMapInfo(int x, int y)
+        {
+            //order : NE NW SW SE
+            var absMapUnit = new AbstractUnitMap[4];
+            if (IsValidAUM(x, y - 1))
             {
-                for (int j = 0; j < tileCombinationType.Height; j++)
+                absMapUnit[0] = AbstractUnitMap[x, y - 1];
+            }
+            if (IsValidAUM(x - 1, y))
+            {
+                absMapUnit[1] = AbstractUnitMap[x - 1, y];
+            }
+            if (IsValidAUM(x, y + 1))
+            {
+                absMapUnit[2] = AbstractUnitMap[x, y + 1];
+            }
+            if (IsValidAUM(x + 1, y))
+            {
+                absMapUnit[3] = AbstractUnitMap[x + 1, y];
+            }
+            return absMapUnit;
+        }
+
+        public static void PlaceMapUnit(int x, int y, string mapUnitName)
+        {
+            var absMapUnit = GetAbstractMapUnitByName(mapUnitName);
+            AbstractUnitMap[x, y].Placed = true;
+
+            for (int i = 0; i < 15; i++)
+            {
+                for (int j = 0; j < 15; j++)
                 {
-                    var absTileType = tileCombinationType.AbsTileType[i, j];
-                    if (absTileType.Used)
+                    if (IsValidAT(x * 15 + i, y * 15 + j))
                     {
+                        var absTileType = absMapUnit.AbsTileType[i, j];
                         var absTile = new AbstractTile();
-                        absTile.SetProperty(x + i, y + j, z, absTileType);
-                        AbsTile[x + i, y + j] = absTile;
+                        absTile.SetProperty(x * 15 + i, y * 15 + j, 0, absTileType);
+                        AbsTile[x * 15 + i, y * 15 + j] = absTile;
                     }
                 }
             }
-            var tileCombination = new TileCombination();
-            tileCombination.Initialize(x, y, AbsTile[x, y].Z, tileNum);
-
-            if (direction.Equals("NE"))
-                tileCombination.NEConnected = true;
-            else if (direction.Equals("NW"))
-                tileCombination.NWConnected = true;
-            else if (direction.Equals("SW"))
-                tileCombination.SWConnected = true;
-            else if (direction.Equals("SE"))
-                tileCombination.SEConnected = true;
-
-            TileCombinationList.Add(tileCombination);
         }
 
-        public static int[,] GetConnectOptions(string direction, int tileNum)
+        public static void PlaceMapUnitByAbstractUnitMap()
         {
-            foreach (var pTileCombinationType in TileCombinationTypeList)
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
             {
-                if (pTileCombinationType.TileNum == tileNum)
-                {
-                    if (string.Equals(direction, "NW", StringComparison.OrdinalIgnoreCase) && pTileCombinationType.NWCanConnect)
-                        return pTileCombinationType.NWConnectOptions;
-                    else if (string.Equals(direction, "NE", StringComparison.OrdinalIgnoreCase) && pTileCombinationType.NECanConnect)
-                        return pTileCombinationType.NEConnectOptions;
-                    else if (string.Equals(direction, "SW", StringComparison.OrdinalIgnoreCase) && pTileCombinationType.SWCanConnect)
-                        return pTileCombinationType.SWConnectOptions;
-                    else if (string.Equals(direction, "SE", StringComparison.OrdinalIgnoreCase) && pTileCombinationType.SECanConnect)
-                        return pTileCombinationType.SEConnectOptions;
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                { 
+                    if (AbstractUnitMap[i,j].IsOnMap)
+                    {
+                        PlaceMapUnit(i, j, AbstractUnitMap[i, j].MapUnitName);
+                    }
                 }
             }
-            return null;
         }
-
-        public static void PlaceConnectionTC(TileCombination tileCombination, int[] connectOptionInfo, string direction)
+        public static void SetMapUnit(int x, int y, string mapUnitName)
         {
-            int tileNum = connectOptionInfo[0];
-            int x = connectOptionInfo[1] + tileCombination.X;
-            int y = connectOptionInfo[2] + tileCombination.Y;
-            int z = connectOptionInfo[3] + tileCombination.Z;
-            string rDirection = "";
-            if (direction.Equals("NE"))
-                rDirection = "SW";
-            else if (direction.Equals("NW"))
-                rDirection = "SE";
-            else if (direction.Equals("SW"))
-                rDirection = "NE";
-            else if (direction.Equals("SE"))
-                rDirection = "NW";
-            PlaceTileCombination(tileNum, x, y, z, rDirection);
-        }
-
-        public static void RandomPlaceTileCombination(int times)
-        {
-            int i = 0;
-            while (true)
+            if (IsValidAUM(x,y))
             {
-                if (i >= times)
-                    return;
-                i++;
+                AbstractUnitMap[x, y].MapUnitName = mapUnitName;
+                AbstractUnitMap[x, y].Placed = true;
+            }
+                
+        }
 
-                int minEntropy = int.MaxValue;
-                int minEntropyIndex = 0;
-                for (int j = 0; j < TileCombinationList.Count; j++)
+        public static void SetMapUnitByEntropy()
+        {
+            bool notAllMapUnitsSet = true;
+            int failureTimes = 0;
+            while (notAllMapUnitsSet)
+            {
+                Console.WriteLine("------------------------------");
+                UpdateMapUnitInfo();
+                notAllMapUnitsSet = false;
+                foreach (var absMapUnit in AbstractUnitMap)
                 {
-                    if (TileCombinationList[j].NEConnected
-                    && TileCombinationList[j].NWConnected
-                    && TileCombinationList[j].SWConnected
-                    && TileCombinationList[j].SEConnected)
+                    if (!(absMapUnit.SEConnected
+                        && absMapUnit.NWConnected
+                        && absMapUnit.SWConnected
+                        && absMapUnit.NEConnected))
+                    {
+                        notAllMapUnitsSet = true;
+                    }
+                }
+                int[] targetMapUnit = GetLowestEntropyMU();
+                //order : NE NW SW SE
+                var nearbyUnitMap = GetNearbyAbstractUnitMapInfo(targetMapUnit[0], targetMapUnit[1]);
+
+                var validMapUnitList = new List<AbstractMapUnit>();
+
+                for (int i = 0; i < AbstractMapUnitList.Count; i++)
+                {
+                    if (AbstractMapUnitList[i].Name == "empty")
                         continue;
+                    int conditionsMet = 0;
+                    if (nearbyUnitMap[0] != null)
+                    {
+                        if (nearbyUnitMap[0].MapUnitName != "empty" && nearbyUnitMap[0].IsOnMap)
+                        {
+                            if (AbstractMapUnitList[i].NEConnectionType == nearbyUnitMap[0].GetAbstractMapUnit().SWConnectionType)
+                                conditionsMet++;
+                        }
+                        else
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                    if (nearbyUnitMap[1] != null)
+                    {
+                        if (nearbyUnitMap[1].MapUnitName != "empty" && nearbyUnitMap[1].IsOnMap)
+                        {
+                            if (AbstractMapUnitList[i].NWConnectionType == nearbyUnitMap[1].GetAbstractMapUnit().SEConnectionType)
+                                conditionsMet++;
+                        }
+                        else
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                    if (nearbyUnitMap[2] != null)
+                    {
+                        if (nearbyUnitMap[2].MapUnitName != "empty" && nearbyUnitMap[2].IsOnMap)
+                        {
+                            if (AbstractMapUnitList[i].SWConnectionType == nearbyUnitMap[2].GetAbstractMapUnit().NEConnectionType)
+                                conditionsMet++;
+                        }
+                        else
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                    if (nearbyUnitMap[3] != null)
+                    {
+                        if (nearbyUnitMap[3].MapUnitName != "empty" && nearbyUnitMap[3].IsOnMap)
+                        {
+                            if (AbstractMapUnitList[i].SEConnectionType == nearbyUnitMap[3].GetAbstractMapUnit().NWConnectionType)
+                                conditionsMet++;
+                        }
+                        else
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
 
-                    TileCombinationList[j].SetEntropy();
-                    if (TileCombinationList[j].Entropy < minEntropy && TileCombinationList[j].Entropy != 0)
-                    {
-                        minEntropy = TileCombinationList[j].Entropy;
-                        minEntropyIndex = j;
-                    }
+                    if (conditionsMet == 4)
+                        validMapUnitList.Add(AbstractMapUnitList[i]);
                 }
-                if (minEntropy == int.MaxValue)
-                    return;
 
-                var tileCombination = TileCombinationList[minEntropyIndex]; 
-                if (!tileCombination.NEConnected)
+                for (int i = validMapUnitList.Count() -1; i >= 0; i-- )
                 {
-                    var options = GetConnectOptions("NE", tileCombination.TileNum);
-                    if (options != null)
+                    if (validMapUnitList.Count > 1)
                     {
-                        int selectedIndex = GetRandomTCWeighted(options);
-                        int[] option = { options[selectedIndex, 1],
-                        options[selectedIndex, 2],
-                        options[selectedIndex, 3],
-                        options[selectedIndex, 4], };
-                        TileCombinationList[minEntropyIndex].NEConnected = true;
-                        PlaceConnectionTC(tileCombination, option, "NE");
+                        var name = validMapUnitList[i].Name;
+                        if (nearbyUnitMap[0] != null)
+                        {
+                            if (nearbyUnitMap[0].MapUnitName == name)
+                            {
+                                validMapUnitList.RemoveAt(i);
+                                continue;
+                            }
+                        }
+                        if (nearbyUnitMap[1] != null)
+                        {
+                            if (nearbyUnitMap[1].MapUnitName == name)
+                            {
+                                validMapUnitList.RemoveAt(i);
+                                continue;
+                            }
+                        }
+                        if (nearbyUnitMap[2] != null)
+                        {
+                            if (nearbyUnitMap[2].MapUnitName == name)
+                            {
+                                validMapUnitList.RemoveAt(i);
+                                continue;
+                            }
+                        }
+                        if (nearbyUnitMap[3] != null)
+                        {
+                            if (nearbyUnitMap[3].MapUnitName == name)
+                            {
+                                validMapUnitList.RemoveAt(i);
+                                continue;
+                            }
+                        }
                     }
                 }
-                if (!tileCombination.NWConnected)
+                
+                IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
+                if (validMapUnitList.Count > 0)
                 {
-                    var options = GetConnectOptions("NW", tileCombination.TileNum);
-                    if (options != null)
+                    Console.WriteLine("Valid map unit list:");
+                    int weight = 0;
+                    foreach (var abstractMapUnit in validMapUnitList)
                     {
-                        int selectedIndex = GetRandomTCWeighted(options);
-                        int[] option = { options[selectedIndex, 1],
-                        options[selectedIndex, 2],
-                        options[selectedIndex, 3],
-                        options[selectedIndex, 4] };
-                        TileCombinationList[minEntropyIndex].NWConnected = true;
-                        PlaceConnectionTC(tileCombination, option, "NW");
+                        randomizer.Add(abstractMapUnit.Name, abstractMapUnit.Weight);
+                        weight += abstractMapUnit.Weight;
+                        Console.WriteLine("  Name: " + abstractMapUnit.Name + ", Weight: "+ abstractMapUnit.Weight);
+                    }
+                    if (weight > 0)
+                    {
+                        var result = randomizer.NextWithReplacement();
+                        AbstractUnitMap[targetMapUnit[0], targetMapUnit[1]].MapUnitName = result;
+                        AbstractUnitMap[targetMapUnit[0], targetMapUnit[1]].Placed = true;
+                        Console.WriteLine("Choose {0} to place in [{1},{2}]", result, targetMapUnit[0], targetMapUnit[1]);
+                    }
+                    else
+                    {
+                        Console.WriteLine("No valid map unit to place in [{0},{1}], because total weight is 0", targetMapUnit[0], targetMapUnit[1]);
+                        failureTimes++;
+                        if (failureTimes >= AbstractUnitMap.GetLength(0) * AbstractUnitMap.GetLength(1))
+                        {
+                            Console.WriteLine("No valid map unit to place!");
+                            return;
+                        }
                     }
                 }
-                if (!tileCombination.SEConnected)
+                else
                 {
-                    var options = GetConnectOptions("SE", tileCombination.TileNum);
-                    if (options != null)
+                    failureTimes++;
+                    if (failureTimes >= AbstractUnitMap.GetLength(0) * AbstractUnitMap.GetLength(1))
                     {
-                        int selectedIndex = GetRandomTCWeighted(options);
-                        int[] option = { options[selectedIndex, 1],
-                        options[selectedIndex, 2],
-                        options[selectedIndex, 3],
-                        options[selectedIndex, 4] };
-                        TileCombinationList[minEntropyIndex].SEConnected = true;
-                        PlaceConnectionTC(tileCombination, option, "SE");
+                        Console.WriteLine("No valid map unit to place!");
+                        return;
                     }
                 }
-                if (!tileCombination.SWConnected)
-                {
-                    var options = GetConnectOptions("SW", tileCombination.TileNum);
-                    if (options != null)
-                    {
-                        int selectedIndex = GetRandomTCWeighted(options);
-                        int[] option = { options[selectedIndex, 1],
-                        options[selectedIndex, 2],
-                        options[selectedIndex, 3],
-                        options[selectedIndex, 4] };
-                        TileCombinationList[minEntropyIndex].SWConnected = true;
-                        PlaceConnectionTC(tileCombination, option, "SW");
-                    }
-                }
+                UpdateMapUnitInfo();
             }
         }
 
-        public static int GetRandomTCWeighted(int[,] options)
+        public static int[] GetLowestEntropyMU()
+        {
+            UpdateMapUnitInfo();
+            int[] lowestEntropyMU = { 0, 0 };
+            int lowestEntropy = int.MaxValue;
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                {
+                    if (AbstractUnitMap[i, j].Entropy < lowestEntropy && AbstractUnitMap[i, j].MapUnitName == "empty")
+                    {
+                        lowestEntropy = AbstractUnitMap[i, j].Entropy;
+                        lowestEntropyMU[0] = i;
+                        lowestEntropyMU[1] = j;
+                    }
+                }
+            }
+            return lowestEntropyMU;
+        }
+
+        public static void UpdateMapUnitInfo()
+        {
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                {
+                    AbstractUnitMap[i, j].Entropy = 50;
+                    if (IsValidAUM(i, j - 1))
+                    {
+                        if (AbstractUnitMap[i, j - 1].MapUnitName != "empty")
+                        {
+                            AbstractUnitMap[i, j].NEConnected = true;
+                            AbstractUnitMap[i, j].Entropy -= 10;
+                        }
+                    }
+                    if (IsValidAUM(i, j + 1))
+                    {
+                        if (AbstractUnitMap[i, j + 1].MapUnitName != "empty")
+                        {
+                            AbstractUnitMap[i, j].SWConnected = true;
+                            AbstractUnitMap[i, j].Entropy -= 10;
+                        }
+                    }
+                    if (IsValidAUM(i - 1, j))
+                    {
+                        if (AbstractUnitMap[i - 1, j].MapUnitName != "empty")
+                        {
+                            AbstractUnitMap[i, j].NWConnected = true;
+                            AbstractUnitMap[i, j].Entropy -= 10;
+                        }
+                    }
+                    if (IsValidAUM(i + 1, j))
+                    {
+                        if (AbstractUnitMap[i + 1, j].MapUnitName != "empty")
+                        {
+                            AbstractUnitMap[i, j].SEConnected = true;
+                            AbstractUnitMap[i, j].Entropy -= 10;
+                        }
+                    }
+                    if (!(AbstractUnitMap[i, j].SEConnected 
+                        && AbstractUnitMap[i, j].NWConnected 
+                        && AbstractUnitMap[i, j].SWConnected 
+                        && AbstractUnitMap[i, j].NEConnected))
+                    {
+                        if (AbstractUnitMap[i, j].SEConnected)
+                            AbstractUnitMap[i, j].Entropy -= 2;
+                        if (AbstractUnitMap[i, j].NWConnected)
+                            AbstractUnitMap[i, j].Entropy -= 2;
+                        if (AbstractUnitMap[i, j].SWConnected)
+                            AbstractUnitMap[i, j].Entropy -= 2;
+                        if (AbstractUnitMap[i, j].NEConnected)
+                            AbstractUnitMap[i, j].Entropy -= 2;
+                    }
+                    else
+                        AbstractUnitMap[i, j].Entropy = 50;
+                }
+            }
+        }
+        public static void RandomSetMapUnit()
         {
             IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
-            for (int i = 0; i < options.GetLength(0); i++)
+            foreach (var abstractMapUnit in AbstractMapUnitList)
             {
-                randomizer.Add(i.ToString(), options[i, 0]);
+                randomizer.Add(abstractMapUnit.Name, 1);
             }
-            return int.Parse(randomizer.NextWithReplacement());
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                {
+                    AbstractUnitMap[i, j].MapUnitName = randomizer.NextWithReplacement();
+                }
+            }
         }
-
         public static List<IsoTile> CreateTileList()
         {
             var tileList = new List<IsoTile>();

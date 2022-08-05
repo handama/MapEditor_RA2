@@ -24,5 +24,12 @@ namespace MapEditor
         public static string NEWURBANINIPath = WorkFolder + "NEWURBAN.json";
         public static string LUNARINIPath = WorkFolder + "LUNAR.json"; 
         public static string DESERTINIPath = WorkFolder + "DESERT.json";
+
+        public static string TEMPERATEPath = WorkFolder + @"TileInfo\TEMPERATE";
+        public static string SNOWPath = WorkFolder + @"TileInfo\SNOW";
+        public static string URBANPath = WorkFolder + @"TileInfo\URBAN";
+        public static string NEWURBANPath = WorkFolder + @"TileInfo\NEWURBAN";
+        public static string LUNARPath = WorkFolder + @"TileInfo\LUNAR";
+        public static string DESERTPath = WorkFolder + @"TileInfo\DESERT";
     }
 }
