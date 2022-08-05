@@ -17,14 +17,6 @@ namespace MapEditor
         public static string BitMapPath = WorkFolder + BitMapName;
         public static string TemplateMapName = "templateMap.map";
         public static string TemplateMapPath = WorkFolder + TemplateMapName;
-        public static string CommonINIPath = WorkFolder + "Common.json";
-        public static string TEMPERATEINIPath = WorkFolder + "TEMPERATE.json";
-        public static string SNOWINIPath = WorkFolder + "SNOW.json";
-        public static string URBANINIPath = WorkFolder + "URBAN.json";
-        public static string NEWURBANINIPath = WorkFolder + "NEWURBAN.json";
-        public static string LUNARINIPath = WorkFolder + "LUNAR.json"; 
-        public static string DESERTINIPath = WorkFolder + "DESERT.json";
-
         public static string TEMPERATEPath = WorkFolder + @"TileInfo\TEMPERATE";
         public static string SNOWPath = WorkFolder + @"TileInfo\SNOW";
         public static string URBANPath = WorkFolder + @"TileInfo\URBAN";

@@ -53,27 +53,5 @@ namespace MapEditor
             }
             IsOnMap = isOnMap;
         }
-        public int GetTileCombinationIndex()
-        {
-            for (int h = 0; h< AbstractMap.TileCombinationList.Count; h++)
-            {
-                var tcp = AbstractMap.TileCombinationList[h].GetTileCombinationType();
-                for (int i = 0; i < tcp.Width; i++)
-                {
-                    for (int j = 0; j < tcp.Height; j++)
-                    {
-                        var absTileType = tcp.AbsTileType[i, j];
-                        if (absTileType.Used)
-                        {
-                            var absTile = new AbstractTile();
-                            absTile.SetProperty(X + i, Y + j, Z, absTileType);
-                            if (absTile.TileNum == this.TileNum)
-                                return h;
-                        }
-                    }
-                }
-            }
-            return -1;
-        }
     }
 }

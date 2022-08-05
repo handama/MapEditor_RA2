@@ -18,8 +18,6 @@ namespace MapEditor
         public static int[] Size { get; private set; }
         public static AbstractTile[,] AbsTile { get; private set; }
         public static int Theater { get; private set; }
-        public static List<TileCombination> TileCombinationList { get; private set; }
-        public static List<TileCombinationType> TileCombinationTypeList { get; private set; }
         public static List<AbstractMapUnit> AbstractMapUnitList { get; private set; }
         public static AbstractUnitMap[,] AbstractUnitMap { get; private set; }
 
@@ -31,8 +29,6 @@ namespace MapEditor
             int range = Width + Height;
             AbsTile = new AbstractTile[range, range];
             Size = new int[2] { Width, Height };
-            TileCombinationList = new List<TileCombination>();
-            TileCombinationTypeList = new List<TileCombinationType>();
             AbstractMapUnitList = new List<AbstractMapUnit>();
             AbstractUnitMap = new AbstractUnitMap [(int)Math.Ceiling((float)range / 15.0), (int)Math.Ceiling((float)range / 15.0)];
 
@@ -109,8 +105,7 @@ namespace MapEditor
                         AbstractUnitMap[i, j].SEConnected = true;
                 }
             }
-           
-            //SterilizeTileCombination();
+
             SterilizeMapUnit();
         }
         public static bool IsValidAUM(int x, int y)

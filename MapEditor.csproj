@@ -107,8 +107,6 @@
     <Compile Include="MapFormat.cs" />
     <Compile Include="Mapfile.cs" />
     <Compile Include="TileInfo\AbstractTileType.cs" />
-    <Compile Include="TileInfo\TileCombination.cs" />
-    <Compile Include="TileInfo\TileCombinationType.cs" />
     <Compile Include="TileInfo\TileEnum.cs" />
   </ItemGroup>
   <ItemGroup>
