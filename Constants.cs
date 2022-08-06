@@ -23,5 +23,7 @@ namespace MapEditor
         public static string NEWURBANPath = WorkFolder + @"TileInfo\NEWURBAN";
         public static string LUNARPath = WorkFolder + @"TileInfo\LUNAR";
         public static string DESERTPath = WorkFolder + @"TileInfo\DESERT";
+
+        public static int FailureTimes = 10000;
     }
 }

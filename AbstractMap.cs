@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.IO;
 using Weighted_Randomizer;
 
@@ -20,6 +18,8 @@ namespace MapEditor
         public static int Theater { get; private set; }
         public static List<AbstractMapUnit> AbstractMapUnitList { get; private set; }
         public static AbstractUnitMap[,] AbstractUnitMap { get; private set; }
+        public static List<int[]> PlacedAbstractMapUnitRecord { get; private set; }
+        public static List<FailureAbstractMapUnitRecord> FailureAbsMapUnitRecordList { get; private set; }
 
         public static void Initialize(int width, int height, Theater theater)
         {
@@ -31,6 +31,8 @@ namespace MapEditor
             Size = new int[2] { Width, Height };
             AbstractMapUnitList = new List<AbstractMapUnit>();
             AbstractUnitMap = new AbstractUnitMap [(int)Math.Ceiling((float)range / 15.0), (int)Math.Ceiling((float)range / 15.0)];
+            PlacedAbstractMapUnitRecord = new List<int[]>();
+            FailureAbsMapUnitRecordList = new List<FailureAbstractMapUnitRecord>();
 
             for (int y = 0; y < range; y++)
             {
@@ -224,8 +226,33 @@ namespace MapEditor
             {
                 AbstractUnitMap[x, y].MapUnitName = mapUnitName;
                 AbstractUnitMap[x, y].Placed = true;
+                RecordPlacedMapUnit(x, y);
             }
-                
+        }
+
+        public static void RecordPlacedMapUnit(int x, int y)
+        {
+            int[] record = { x, y };
+            PlacedAbstractMapUnitRecord.Add(record);
+        }
+        public static void DeleteMapUnit(int x, int y)
+        {
+            if (IsValidAUM(x, y))
+            {
+                AbstractUnitMap[x, y].MapUnitName = "empty";
+                AbstractUnitMap[x, y].Placed = false;
+                UpdateMapUnitInfo();
+
+                int removeIndex = -1;
+                for(int i = 0; i < PlacedAbstractMapUnitRecord.Count; i++)
+                {
+                    int[] record = PlacedAbstractMapUnitRecord[i];
+                    if (record[0] == x && record[1] == y)
+                        removeIndex = i;
+                }
+                if (removeIndex > -1)
+                    PlacedAbstractMapUnitRecord.RemoveAt(removeIndex);
+            }
         }
 
         public static void SetMapUnitByEntropy()
@@ -234,7 +261,6 @@ namespace MapEditor
             int failureTimes = 0;
             while (notAllMapUnitsSet)
             {
-                Console.WriteLine("------------------------------");
                 UpdateMapUnitInfo();
                 notAllMapUnitsSet = false;
                 foreach (var absMapUnit in AbstractUnitMap)
@@ -248,109 +274,39 @@ namespace MapEditor
                     }
                 }
                 int[] targetMapUnit = GetLowestEntropyMU();
+                if (targetMapUnit[0] == -1 && targetMapUnit[1] == -1)
+                {
+                    Console.WriteLine("------------------------------");
+                    Console.WriteLine("Successfully place all map units!");
+                    Console.WriteLine("------------------------------");
+                    return;
+                }
                 //order : NE NW SW SE
                 var nearbyUnitMap = GetNearbyAbstractUnitMapInfo(targetMapUnit[0], targetMapUnit[1]);
 
-                var validMapUnitList = new List<AbstractMapUnit>();
+                var validMapUnitList = GetValidAbsMapUnitList(nearbyUnitMap);
 
-                for (int i = 0; i < AbstractMapUnitList.Count; i++)
+                var failureRecord = new FailureAbstractMapUnitRecord();
+                List<int> deleteUnitMap = new List<int>();
+                foreach (var record in FailureAbsMapUnitRecordList)
                 {
-                    if (AbstractMapUnitList[i].Name == "empty")
-                        continue;
-                    int conditionsMet = 0;
-                    if (nearbyUnitMap[0] != null)
+                    if (record.IsTargetFailureRecord(targetMapUnit[0], targetMapUnit[1]))
+                            failureRecord = record;
+                }
+                for (int i = 0; i < validMapUnitList.Count; i++)
+                {
+                    if (failureRecord.IsInFailureRecord(validMapUnitList[i].Name))
+                        deleteUnitMap.Add(i);
+                }
+                for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
+                { 
+                    foreach(int record in deleteUnitMap)
                     {
-                        if (nearbyUnitMap[0].MapUnitName != "empty" && nearbyUnitMap[0].IsOnMap)
-                        {
-                            if (AbstractMapUnitList[i].NEConnectionType == nearbyUnitMap[0].GetAbstractMapUnit().SWConnectionType)
-                                conditionsMet++;
-                        }
-                        else
-                            conditionsMet++;
+                        if (i == record)
+                            validMapUnitList.RemoveAt(i);
                     }
-                    else
-                        conditionsMet++;
-                    if (nearbyUnitMap[1] != null)
-                    {
-                        if (nearbyUnitMap[1].MapUnitName != "empty" && nearbyUnitMap[1].IsOnMap)
-                        {
-                            if (AbstractMapUnitList[i].NWConnectionType == nearbyUnitMap[1].GetAbstractMapUnit().SEConnectionType)
-                                conditionsMet++;
-                        }
-                        else
-                            conditionsMet++;
-                    }
-                    else
-                        conditionsMet++;
-                    if (nearbyUnitMap[2] != null)
-                    {
-                        if (nearbyUnitMap[2].MapUnitName != "empty" && nearbyUnitMap[2].IsOnMap)
-                        {
-                            if (AbstractMapUnitList[i].SWConnectionType == nearbyUnitMap[2].GetAbstractMapUnit().NEConnectionType)
-                                conditionsMet++;
-                        }
-                        else
-                            conditionsMet++;
-                    }
-                    else
-                        conditionsMet++;
-                    if (nearbyUnitMap[3] != null)
-                    {
-                        if (nearbyUnitMap[3].MapUnitName != "empty" && nearbyUnitMap[3].IsOnMap)
-                        {
-                            if (AbstractMapUnitList[i].SEConnectionType == nearbyUnitMap[3].GetAbstractMapUnit().NWConnectionType)
-                                conditionsMet++;
-                        }
-                        else
-                            conditionsMet++;
-                    }
-                    else
-                        conditionsMet++;
-
-                    if (conditionsMet == 4)
-                        validMapUnitList.Add(AbstractMapUnitList[i]);
                 }
 
-                for (int i = validMapUnitList.Count() -1; i >= 0; i-- )
-                {
-                    if (validMapUnitList.Count > 1)
-                    {
-                        var name = validMapUnitList[i].Name;
-                        if (nearbyUnitMap[0] != null)
-                        {
-                            if (nearbyUnitMap[0].MapUnitName == name)
-                            {
-                                validMapUnitList.RemoveAt(i);
-                                continue;
-                            }
-                        }
-                        if (nearbyUnitMap[1] != null)
-                        {
-                            if (nearbyUnitMap[1].MapUnitName == name)
-                            {
-                                validMapUnitList.RemoveAt(i);
-                                continue;
-                            }
-                        }
-                        if (nearbyUnitMap[2] != null)
-                        {
-                            if (nearbyUnitMap[2].MapUnitName == name)
-                            {
-                                validMapUnitList.RemoveAt(i);
-                                continue;
-                            }
-                        }
-                        if (nearbyUnitMap[3] != null)
-                        {
-                            if (nearbyUnitMap[3].MapUnitName == name)
-                            {
-                                validMapUnitList.RemoveAt(i);
-                                continue;
-                            }
-                        }
-                    }
-                }
-                
                 IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
                 if (validMapUnitList.Count > 0)
                 {
@@ -367,13 +323,16 @@ namespace MapEditor
                         var result = randomizer.NextWithReplacement();
                         AbstractUnitMap[targetMapUnit[0], targetMapUnit[1]].MapUnitName = result;
                         AbstractUnitMap[targetMapUnit[0], targetMapUnit[1]].Placed = true;
+                        RecordPlacedMapUnit(targetMapUnit[0], targetMapUnit[1]);
                         Console.WriteLine("Choose {0} to place in [{1},{2}]", result, targetMapUnit[0], targetMapUnit[1]);
+                        Console.WriteLine("------------------------------");
                     }
                     else
                     {
                         Console.WriteLine("No valid map unit to place in [{0},{1}], because total weight is 0", targetMapUnit[0], targetMapUnit[1]);
                         failureTimes++;
-                        if (failureTimes >= AbstractUnitMap.GetLength(0) * AbstractUnitMap.GetLength(1))
+                        Console.WriteLine("------------------------------");
+                        if (failureTimes >= Constants.FailureTimes)
                         {
                             Console.WriteLine("No valid map unit to place!");
                             return;
@@ -382,27 +341,211 @@ namespace MapEditor
                 }
                 else
                 {
+                    int[] previousLocation = PlacedAbstractMapUnitRecord.Last();
+                    var previousName = AbstractUnitMap[previousLocation[0], previousLocation[1]].MapUnitName;
+                    var failure = new FailureAbstractMapUnitRecord();
+                    int existFailureIndex = -1;
+                    for (int i = 0; i < FailureAbsMapUnitRecordList.Count; i++)
+                    {
+                        if (FailureAbsMapUnitRecordList[i].IsTargetFailureRecord(previousLocation[0], previousLocation[1]))
+                            existFailureIndex = i;
+                    }
+                    if (existFailureIndex > -1)
+                    {
+                        FailureAbsMapUnitRecordList[existFailureIndex].AddFailureRecord(previousLocation[0], previousLocation[1], previousName);
+                    }
+                    else
+                    {
+                        failure.AddFailureRecord(previousLocation[0], previousLocation[1], previousName);
+                        FailureAbsMapUnitRecordList.Add(failure);
+                    }
+                    foreach (var failureRec in FailureAbsMapUnitRecordList)
+                    {
+                        if (failureRec.IsTargetFailureRecord(targetMapUnit[0], targetMapUnit[1]))
+                            failureRec.Name.Clear();
+                    }
+                    DeleteMapUnit(previousLocation[0], previousLocation[1]);
+
+
                     failureTimes++;
-                    if (failureTimes >= AbstractUnitMap.GetLength(0) * AbstractUnitMap.GetLength(1))
+                    if (failureTimes >= Constants.FailureTimes)
                     {
                         Console.WriteLine("No valid map unit to place!");
                         return;
                     }
                 }
-                UpdateMapUnitInfo();
             }
+        }
+        public static void FillRemainingEmptyUnitMap()
+        {
+            UpdateMapUnitInfo();
+            Console.WriteLine("------------------------------");
+            Console.WriteLine("Strat filling remaining empty unit map");
+            Console.WriteLine("------------------------------");
+            int count = 0;
+            for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
+                {
+                    var unitMap = AbstractUnitMap[i, j];
+                    if (unitMap.MapUnitName == "empty" && unitMap.IsOnMap && !unitMap.Placed)
+                    {
+                        var nearbyUnitMap = GetNearbyAbstractUnitMapInfo(i,j);
+                        var validMapUnitList = GetValidAbsMapUnitList(nearbyUnitMap);
+                        IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
+                        if (validMapUnitList.Count > 0)
+                        {
+                            Console.WriteLine("Valid map unit list:");
+                            int weight = 0;
+                            foreach (var abstractMapUnit in validMapUnitList)
+                            {
+                                randomizer.Add(abstractMapUnit.Name, abstractMapUnit.Weight);
+                                weight += abstractMapUnit.Weight;
+                                Console.WriteLine("  Name: " + abstractMapUnit.Name + ", Weight: " + abstractMapUnit.Weight);
+                            }
+                            if (weight > 0)
+                            {
+                                var result = randomizer.NextWithReplacement();
+                                AbstractUnitMap[i,j].MapUnitName = result;
+                                AbstractUnitMap[i,j].Placed = true;
+                                RecordPlacedMapUnit(i,j);
+                                count++;
+                                Console.WriteLine("Choose {0} to place in [{1},{2}]", result, i,j);
+                                Console.WriteLine("------------------------------");
+                            }
+                            else
+                            {
+                                Console.WriteLine("No valid map unit to place in [{0},{1}], because total weight is 0", i,j);
+                                Console.WriteLine("------------------------------");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Failed to fill empty unit map in [{0},{1}]", i, j);
+                            Console.WriteLine("------------------------------");
+                        }
+                    }
+                }
+            }
+            Console.WriteLine("End of filling remaining empty unit map");
+            Console.WriteLine("Counts: {0}",count);
+            Console.WriteLine("------------------------------");
+        }
+
+        public static List<AbstractMapUnit> GetValidAbsMapUnitList(AbstractUnitMap[] nearbyUnitMap)
+        {
+            var validMapUnitList = new List<AbstractMapUnit>();
+
+            for (int i = 0; i < AbstractMapUnitList.Count; i++)
+            {
+                if (AbstractMapUnitList[i].Name == "empty")
+                    continue;
+                int conditionsMet = 0;
+                if (nearbyUnitMap[0] != null)
+                {
+                    if (nearbyUnitMap[0].MapUnitName != "empty" && nearbyUnitMap[0].IsOnMap)
+                    {
+                        if (AbstractMapUnitList[i].NEConnectionType == nearbyUnitMap[0].GetAbstractMapUnit().SWConnectionType)
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                }
+                else
+                    conditionsMet++;
+                if (nearbyUnitMap[1] != null)
+                {
+                    if (nearbyUnitMap[1].MapUnitName != "empty" && nearbyUnitMap[1].IsOnMap)
+                    {
+                        if (AbstractMapUnitList[i].NWConnectionType == nearbyUnitMap[1].GetAbstractMapUnit().SEConnectionType)
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                }
+                else
+                    conditionsMet++;
+                if (nearbyUnitMap[2] != null)
+                {
+                    if (nearbyUnitMap[2].MapUnitName != "empty" && nearbyUnitMap[2].IsOnMap)
+                    {
+                        if (AbstractMapUnitList[i].SWConnectionType == nearbyUnitMap[2].GetAbstractMapUnit().NEConnectionType)
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                }
+                else
+                    conditionsMet++;
+                if (nearbyUnitMap[3] != null)
+                {
+                    if (nearbyUnitMap[3].MapUnitName != "empty" && nearbyUnitMap[3].IsOnMap)
+                    {
+                        if (AbstractMapUnitList[i].SEConnectionType == nearbyUnitMap[3].GetAbstractMapUnit().NWConnectionType)
+                            conditionsMet++;
+                    }
+                    else
+                        conditionsMet++;
+                }
+                else
+                    conditionsMet++;
+
+                if (conditionsMet == 4)
+                    validMapUnitList.Add(AbstractMapUnitList[i]);
+            }
+
+            for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
+            {
+                if (validMapUnitList.Count > 1)
+                {
+                    var name = validMapUnitList[i].Name;
+                    if (nearbyUnitMap[0] != null)
+                    {
+                        if (nearbyUnitMap[0].MapUnitName == name)
+                        {
+                            validMapUnitList.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                    if (nearbyUnitMap[1] != null)
+                    {
+                        if (nearbyUnitMap[1].MapUnitName == name)
+                        {
+                            validMapUnitList.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                    if (nearbyUnitMap[2] != null)
+                    {
+                        if (nearbyUnitMap[2].MapUnitName == name)
+                        {
+                            validMapUnitList.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                    if (nearbyUnitMap[3] != null)
+                    {
+                        if (nearbyUnitMap[3].MapUnitName == name)
+                        {
+                            validMapUnitList.RemoveAt(i);
+                            continue;
+                        }
+                    }
+                }
+            }
+            return validMapUnitList;
         }
 
         public static int[] GetLowestEntropyMU()
         {
             UpdateMapUnitInfo();
-            int[] lowestEntropyMU = { 0, 0 };
+            int[] lowestEntropyMU = { -1, -1 };
             int lowestEntropy = int.MaxValue;
             for (int i = 0; i < AbstractUnitMap.GetLength(0); i++)
             {
                 for (int j = 0; j < AbstractUnitMap.GetLength(1); j++)
                 {
-                    if (AbstractUnitMap[i, j].Entropy < lowestEntropy && AbstractUnitMap[i, j].MapUnitName == "empty")
+                    if (AbstractUnitMap[i, j].Entropy < lowestEntropy && AbstractUnitMap[i, j].MapUnitName == "empty" && AbstractUnitMap[i, j].IsOnMap)
                     {
                         lowestEntropy = AbstractUnitMap[i, j].Entropy;
                         lowestEntropyMU[0] = i;

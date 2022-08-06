@@ -16,9 +16,11 @@ namespace MapEditor
             AbstractMap.Initialize(100, 100, Theater.TEMPERATE);
             int range = AbstractMap.Width + AbstractMap.Height;
 
-            //AbstractMap.SetMapUnit(6, 6, "001");
+            AbstractMap.SetMapUnit(6, 6, "011");
             AbstractMap.SetMapUnitByEntropy();
+            AbstractMap.FillRemainingEmptyUnitMap();
             AbstractMap.PlaceMapUnitByAbstractUnitMap();
+            
             //AbstractMap.PlaceTileCombination(295, 100, 100);
             //AbstractMap.RandomPlaceTileCombination(10000);
 
