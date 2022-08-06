@@ -25,5 +25,7 @@ namespace MapEditor
         public static string DESERTPath = WorkFolder + @"TileInfo\DESERT";
 
         public static int FailureTimes = 10000;
+        public static string RenderPath = WorkFolder + @"Map Renderer\CNCMaps.Renderer.exe";
+        public static string GamePath = @"D:\Games\YURI\Red Alert 2";
     }
 }

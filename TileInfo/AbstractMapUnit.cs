@@ -1,14 +1,16 @@
-﻿using System;
+﻿using MapEditor.Technos;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Rampastring.Tools;
 
 namespace MapEditor.TileInfo
 {
     public class AbstractMapUnit
     {
-        public string Name { get; private set; }
+        public string MapUnitName;
         public const int Width = 15;
         public const int Height = 15;
         public AbstractTileType[,] AbsTileType = new AbstractTileType[Width, Height];
@@ -17,21 +19,23 @@ namespace MapEditor.TileInfo
         public int SWConnectionType = -1;
         public int SEConnectionType = -1;
         public int Weight = 0;
+        public List<Unit> UnitList { get; private set; }
 
         public void Initialize(FileInfo file)
         {
-            var map = new Mapfile();
+            UnitList = new List<Unit>();
+            var map = new MapFile();
             map.CreateIsoTileList(file.FullName);
             for (int i = 0; i < Width; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
                     var absTileType = new AbstractTileType();
-                    foreach (var tile in map.Tile_input_list)
+                    foreach (var tile in map.IsoTileList)
                     {
                         if (tile.Rx == i + 13 && tile.Ry == j + 13)
                         {
-                            Name = file.Name.Trim(("."+ file.Extension).ToCharArray());
+                            MapUnitName = file.Name.Trim((file.Extension).ToCharArray());
                             absTileType.TileNum = tile.TileNum;
                             absTileType.SubTile = tile.SubTile;
                             absTileType.Z = tile.Z;
@@ -42,7 +46,7 @@ namespace MapEditor.TileInfo
             }
             for (int i = 0; i < Width; i++)
             {
-                foreach (var tile in map.Tile_input_list)
+                foreach (var tile in map.IsoTileList)
                 {
                     if (tile.Rx == 10 && tile.Ry == i + 13 && tile.TileNum != -1 && tile.TileNum != 0)
                     {
@@ -62,11 +66,24 @@ namespace MapEditor.TileInfo
                     }
                 }
             }
-            foreach (var tile in map.Tile_input_list)
+            foreach (var tile in map.IsoTileList)
             { 
                 if (tile.Rx < 8 && tile.TileNum != -1 && tile.TileNum != 0)
                 {
                     Weight++;
+                }
+            }
+
+            var mapFile = new IniFile(file.FullName);
+            if (mapFile.SectionExists("Units"))
+            {
+                var unitSection = mapFile.GetSection("Units");
+                foreach (var unitString in unitSection.Keys)
+                {
+                    var unit = new Unit();
+                    unit.Initialize(unitString.Value);
+                    if (unit != null)
+                        UnitList.Add(unit);
                 }
             }
         }

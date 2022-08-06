@@ -9,15 +9,17 @@ using System.Text;
 using Rampastring.Tools;
 using MapEditor.TileInfo;
 using System.Linq.Expressions;
+using System.Diagnostics;
 
 namespace MapEditor
 {
-    class Mapfile
+    class MapFile
     {
         public int Width;
         public int Height;
         public int MapTheater;
-        public List<IsoTile> Tile_input_list;
+        public List<IsoTile> IsoTileList;
+        public IniSection Unit = new IniSection("Units");
         public void CreateIsoTileList(string filePath)
         {
             var MapFile = new IniFile(filePath);
@@ -49,7 +51,7 @@ namespace MapEditor
             //Console.WriteLine(BitConverter.ToString(lzoData));
             int count = 0;
             //List<List<IsoTile>> TilesList = new List<List<IsoTile>>(Width * 2 - 1);
-            Tile_input_list = new List<IsoTile>();
+            IsoTileList = new List<IsoTile>();
             //Console.WriteLine(TilesList.Capacity);
             for (int i = 0; i < cells; i++)
             {
@@ -73,7 +75,7 @@ namespace MapEditor
                     var tile = new IsoTile((ushort)dx, (ushort)dy, rx, ry, z, tilenum, subtile);//IsoTile定义是NumberedMapObject
 
                     Tiles[(ushort)dx, (ushort)dy / 2] = tile;//给瓷砖赋值
-                    Tile_input_list.Add(tile);
+                    IsoTileList.Add(tile);
                 }
             }
             //用来检查有没有空着的
@@ -103,7 +105,7 @@ namespace MapEditor
             int cells = (Width * 2 - 1) * Height;
             int lzoPackSize = cells * 11 + 4;
             var isoMapPack2 = new byte[lzoPackSize];
-            foreach (var tile in Tile_input_list)
+            foreach (var tile in IsoTileList)
             {
                 var bs = tile.ToMapPack5Entry().ToArray();//ToMapPack5Entry的定义在MapObjects.cs
                                                           //ToArray将ArrayList转换为Array：
@@ -143,9 +145,9 @@ namespace MapEditor
             mapPackSection.SetStringValue("0", "Dx,Dy,Rx,Ry,Z,TileNum,SubTile");
             mapPack.SetStringValue("Map", "Size", Width.ToString() + "," + Height.ToString());
 
-            for (int i = 0; i < Tile_input_list.Count; i++)
+            for (int i = 0; i < IsoTileList.Count; i++)
             {
-                var isoTile = Tile_input_list[i];
+                var isoTile = IsoTileList[i];
                 mapPackSection.SetStringValue(mapPackIndex++.ToString(),
                        isoTile.Dx.ToString() + "," +
                        isoTile.Dy.ToString() + "," +
@@ -162,7 +164,7 @@ namespace MapEditor
         {
             Width = width;
             Height = height;
-            Tile_input_list = new List<IsoTile>();
+            IsoTileList = new List<IsoTile>();
 
             int cells = (Width * 2 - 1) * Height;
             IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];
@@ -175,7 +177,7 @@ namespace MapEditor
                     ushort rx = (ushort)((dx + dy) / 2 + 1);
                     ushort ry = (ushort)(dy - rx + Width + 1);
                     Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, (int)Common._000_Empty, 0);
-                    Tile_input_list.Add(Tiles[x, y]);
+                    IsoTileList.Add(Tiles[x, y]);
                 }
             }
         }
@@ -185,7 +187,7 @@ namespace MapEditor
             var srcBitmap = (Bitmap)Bitmap.FromFile(filename, false);
             Width = srcBitmap.Width;
             Height = srcBitmap.Height;
-            Tile_input_list = new List<IsoTile>();
+            IsoTileList = new List<IsoTile>();
 
             int cells = (Width * 2 - 1) * Height;
             IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];
@@ -226,7 +228,7 @@ namespace MapEditor
                         }
                     }
                     Tiles[x, y] = new IsoTile(dx, dy, rx, ry, 0, (short)drawTile, 0);
-                    Tile_input_list.Add(Tiles[x, y]);
+                    IsoTileList.Add(Tiles[x, y]);
                 }
             }
         }
@@ -237,12 +239,13 @@ namespace MapEditor
             fullMap.SetStringValue("Map", "Size", "0,0,"+ Width.ToString() + "," + Height.ToString());
             fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
             fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
+            fullMap.AddSection(Unit);
             fullMap.WriteIniFile(path);
             SaveIsoMapPack5(path);
         }
         public void LoadWorkingMapPack(string path)
         {
-            Tile_input_list = new List<IsoTile>();
+            IsoTileList = new List<IsoTile>();
             var mapPack = new IniFile(path);
             var mapPackSection = mapPack.GetSection("mapPack");
             string[] size = mapPack.GetStringValue("Map", "Size", "0,0").Split(',');
@@ -262,10 +265,23 @@ namespace MapEditor
                         (byte)int.Parse(isoTileInfo[4]),
                         short.Parse(isoTileInfo[5]),
                         (byte)int.Parse(isoTileInfo[6]));
-                    Tile_input_list.Add(isoTile);
+                    IsoTileList.Add(isoTile);
                     i++;
                 }
             }
+        }
+        public void RenderMap(string path)
+        {
+            Console.WriteLine("------------------------------");
+            Console.WriteLine("Rendering Map...");
+            Process MapRenderer = new Process();
+            var outputName = path.Split('\\').Last().Split('.')[0];
+            MapRenderer.StartInfo.FileName = Constants.RenderPath;
+            MapRenderer.StartInfo.Arguments ="-i \"" + path + "\" -j -q 70 -o \"" + outputName + "\" -m \"" + Constants.GamePath + "\" -r";
+            MapRenderer.Start();
+            while (!MapRenderer.HasExited) { }
+            Console.WriteLine("Image is saved as " + outputName + ".jpg");
+            Console.WriteLine("------------------------------");
         }
     }
 }

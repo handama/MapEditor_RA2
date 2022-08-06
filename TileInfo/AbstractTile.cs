@@ -22,10 +22,10 @@ namespace MapEditor
             SubTile = 0;
             bool isOnMap = false;
             Used = true;
-            if (Y > AbstractMap.Size[0] - X
-                && Y < 2 * AbstractMap.Size[1] + AbstractMap.Size[0] + 1 - X
-                && Y < X + AbstractMap.Size[0]
-                && Y > X - AbstractMap.Size[0])
+            if (Y > WorkingMap.Size[0] - X
+                && Y < 2 * WorkingMap.Size[1] + WorkingMap.Size[0] + 1 - X
+                && Y < X + WorkingMap.Size[0]
+                && Y > X - WorkingMap.Size[0])
             {
                 isOnMap = true;
             }
@@ -44,10 +44,10 @@ namespace MapEditor
             Z += absTileType.Z;
             Edited = true;
             bool isOnMap = false;
-            if (Y > AbstractMap.Size[0] - X
-                && Y < 2 * AbstractMap.Size[1] + AbstractMap.Size[0] + 1 - X
-                && Y < X + AbstractMap.Size[0]
-                && Y > X - AbstractMap.Size[0])
+            if (Y > WorkingMap.Size[0] - X
+                && Y < 2 * WorkingMap.Size[1] + WorkingMap.Size[0] + 1 - X
+                && Y < X + WorkingMap.Size[0]
+                && Y > X - WorkingMap.Size[0])
             {
                 isOnMap = true;
             }

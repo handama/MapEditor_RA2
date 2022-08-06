@@ -95,14 +95,15 @@
     <None Include="基于CNCMAPRENNDER开源项目的地图格式研究.docx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="WorkingMap.cs" />
     <Compile Include="AbstractMap.cs" />
-    <Compile Include="AbstractUnitMap.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Technos\Unit.cs" />
     <Compile Include="TileInfo\AbstractMapUnit.cs" />
     <Compile Include="TileInfo\AbstractTile.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="MapFormat.cs" />
-    <Compile Include="Mapfile.cs" />
+    <Compile Include="MapFile.cs" />
     <Compile Include="TileInfo\AbstractTileType.cs" />
     <Compile Include="TileInfo\FailureAbstractMapUnitRecord.cs" />
     <Compile Include="TileInfo\TileEnum.cs" />

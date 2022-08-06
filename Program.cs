@@ -1,8 +1,8 @@
-﻿using System;
+﻿using MapEditor.TileInfo;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MapEditor.TileInfo;
 
 namespace MapEditor
 {
@@ -10,17 +10,35 @@ namespace MapEditor
     {
         static void Main(string[] args)
         {
-            var _instance = new Mapfile();
+            /*
+                        for (int i = 0; i < 10; i++)
+                        {
 
-            
-            AbstractMap.Initialize(100, 100, Theater.TEMPERATE);
-            int range = AbstractMap.Width + AbstractMap.Height;
+                            var _instance = new MapFile();
+                            WorkingMap.Initialize(150, 150, Theater.TEMPERATE);
+                            int range = WorkingMap.Width + WorkingMap.Height;
+                            WorkingMap.SetMapUnitByEntropy();
+                            WorkingMap.FillRemainingEmptyUnitMap();
+                            WorkingMap.PlaceMapUnitByAbstractUnitMap();
+                            _instance.Width = WorkingMap.Width;
+                            _instance.Height = WorkingMap.Height;
+                            _instance.MapTheater = WorkingMap.Theater;
+                            _instance.IsoTileList = WorkingMap.CreateTileList();
+                            _instance.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
+                        }*/
 
-            AbstractMap.SetMapUnit(6, 6, "011");
-            AbstractMap.SetMapUnitByEntropy();
-            AbstractMap.FillRemainingEmptyUnitMap();
-            AbstractMap.PlaceMapUnitByAbstractUnitMap();
-            
+
+            var mapFile = new MapFile();
+
+            WorkingMap.Initialize(200, 200, Theater.TEMPERATE);
+            int range = WorkingMap.Width + WorkingMap.Height;
+
+            //AbstractMap.SetMapUnit(6, 6, "011");
+            WorkingMap.SetMapUnitByEntropy();
+            WorkingMap.FillRemainingEmptyUnitMap();
+            WorkingMap.PlaceMapUnitByAbsMapMatrix();
+            WorkingMap.CreateTechnoLists();
+
             //AbstractMap.PlaceTileCombination(295, 100, 100);
             //AbstractMap.RandomPlaceTileCombination(10000);
 
@@ -30,16 +48,18 @@ namespace MapEditor
                             {
                                 absMap.PlaceTileCombination(311, i, j);
                             }
-                        }*/
+                        }
+            */
 
 
 
-
-            _instance.Width = AbstractMap.Width;
-            _instance.Height = AbstractMap.Height;
-            _instance.MapTheater = AbstractMap.Theater;
-            _instance.Tile_input_list = AbstractMap.CreateTileList();
-            _instance.SaveFullMap(Constants.FilePath);
+            mapFile.Width = WorkingMap.Width;
+            mapFile.Height = WorkingMap.Height;
+            mapFile.MapTheater = WorkingMap.Theater;
+            mapFile.IsoTileList = WorkingMap.CreateTileList();
+            mapFile.Unit = WorkingMap.CreateUnitINI();
+            mapFile.SaveFullMap(Constants.FilePath);
+            mapFile.RenderMap(Constants.FilePath);
 
             Console.WriteLine("press any key to exist...");
             Console.ReadKey();
