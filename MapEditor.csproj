@@ -28,7 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
@@ -95,10 +95,15 @@
     <None Include="基于CNCMAPRENNDER开源项目的地图格式研究.docx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NonTileObjects\Aircraft.cs" />
+    <Compile Include="NonTileObjects\Smudge.cs" />
+    <Compile Include="NonTileObjects\Structure.cs" />
+    <Compile Include="NonTileObjects\Infantry.cs" />
+    <Compile Include="NonTileObjects\Terrain.cs" />
     <Compile Include="WorkingMap.cs" />
     <Compile Include="AbstractMap.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Technos\Unit.cs" />
+    <Compile Include="NonTileObjects\Unit.cs" />
     <Compile Include="TileInfo\AbstractMapUnit.cs" />
     <Compile Include="TileInfo\AbstractTile.cs" />
     <Compile Include="Constants.cs" />

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MapEditor.Technos
+namespace MapEditor.NonTileObjects
 {
-    public class Unit
+    public class Infantry
     {
         public string Owner;
         public string Name;
@@ -14,13 +14,13 @@ namespace MapEditor.Technos
         public int X;
         public int RelativeY;
         public int Y;
+        public int Unknown;
         public int Direction;
         public string State;
         public string Tag;
         public int Veteran;
         public int Group;
         public int OnBridge;
-        public int FollowerID;
         public int AutocreateNoRecruitable;
         public int AutocreateYesRecruitable;
 
@@ -34,27 +34,27 @@ namespace MapEditor.Technos
                 Strength = int.Parse(values[2]);
                 RelativeX = int.Parse(values[3]) - 13;
                 RelativeY = int.Parse(values[4]) - 13;
-                Direction = int.Parse(values[5]);
+                Unknown = int.Parse(values[5]);
                 State = values[6];
-                Tag = values[7];
-                Veteran = int.Parse(values[8]);
-                Group = int.Parse(values[9]);
-                OnBridge = int.Parse(values[10]);
-                FollowerID = int.Parse(values[11]);
+                Direction = int.Parse(values[7]);
+                Tag = values[8];
+                Veteran = int.Parse(values[9]);
+                Group = int.Parse(values[10]);
+                OnBridge = int.Parse(values[11]);
                 AutocreateNoRecruitable = int.Parse(values[12]);
                 AutocreateYesRecruitable = int.Parse(values[13]);
             }
             else
-                Console.WriteLine("A unit cannot be parsed.");
+                Console.WriteLine("An infantry cannot be parsed.");
         }
-        public Object Clone()
+        public Infantry Clone()
         {
-            return this.MemberwiseClone();
+            return (Infantry)this.MemberwiseClone();
         }
         public string CreateINIValue()
         {
-            return Owner + "," + Name + "," + Strength + "," + X + "," + Y + "," + Direction + "," + State + "," + Tag
-                + "," + Veteran + "," + Group + "," + OnBridge + "," + FollowerID + "," + AutocreateNoRecruitable + "," + AutocreateYesRecruitable;
+            return Owner + "," + Name + "," + Strength + "," + X + "," + Y + "," + Unknown + "," + State + "," + Direction
+                + "," + Tag + "," + Veteran + "," + Group + "," + OnBridge + "," + AutocreateNoRecruitable + "," + AutocreateYesRecruitable;
         }
     }
 }

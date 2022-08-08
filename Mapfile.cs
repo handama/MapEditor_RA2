@@ -19,7 +19,13 @@ namespace MapEditor
         public int Height;
         public int MapTheater;
         public List<IsoTile> IsoTileList;
+        public List<Overlay> OverlayList;
         public IniSection Unit = new IniSection("Units");
+        public IniSection Infantry = new IniSection("Infantry");
+        public IniSection Structure = new IniSection("Structures");
+        public IniSection Terrain = new IniSection("Terrain");
+        public IniSection Aircraft = new IniSection("Aircraft");
+        public IniSection Smudge = new IniSection("Smudge");
         public void CreateIsoTileList(string filePath)
         {
             var MapFile = new IniFile(filePath);
@@ -125,7 +131,7 @@ namespace MapEditor
 
             while (idx < compressed64.Length)
             {
-                int adv = Math.Min(74, compressed64.Length - idx);//74是什么
+                int adv = Math.Min(74, compressed64.Length - idx);//74 is the length of each line
                 saveMapPackSection.SetStringValue(j.ToString(), compressed64.Substring(idx, adv));
                 j++;
                 idx += adv;//idx=adv+1
@@ -240,8 +246,14 @@ namespace MapEditor
             fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
             fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
             fullMap.AddSection(Unit);
+            fullMap.AddSection(Infantry);
+            fullMap.AddSection(Structure);
+            fullMap.AddSection(Terrain);
+            fullMap.AddSection(Aircraft);
+            fullMap.AddSection(Smudge);
             fullMap.WriteIniFile(path);
             SaveIsoMapPack5(path);
+            SaveOverlay(path);
         }
         public void LoadWorkingMapPack(string path)
         {
@@ -270,6 +282,143 @@ namespace MapEditor
                 }
             }
         }
+
+        public List<Overlay> ReadOverlay(string path)
+        {
+            OverlayList = new List<Overlay>();
+            var mapFile = new IniFile(path);
+            if (!mapFile.SectionExists("OverlayPack") || !mapFile.SectionExists("OverlayDataPack"))
+                return null;
+            IniSection overlaySection = mapFile.GetSection("OverlayPack");
+            if (overlaySection == null)
+                return null;
+
+            string OverlayPackString = "";
+            int sectionIndex = 1;
+            while (overlaySection.KeyExists(sectionIndex.ToString()))
+            {
+                OverlayPackString += overlaySection.GetStringValue(sectionIndex.ToString(), "");
+                sectionIndex++;
+            }
+
+            byte[] format80Data = Convert.FromBase64String(OverlayPackString);
+            var overlayPack = new byte[1 << 18];
+            Format5.DecodeInto(format80Data, overlayPack, 80);
+
+            IniSection overlayDataSection = mapFile.GetSection("OverlayDataPack");
+            if (overlayDataSection == null)
+                return null;
+
+            string OverlayDataPackString = "";
+            sectionIndex = 1;
+            while (overlayDataSection.KeyExists(sectionIndex.ToString()))
+            {
+                OverlayDataPackString += overlayDataSection.GetStringValue(sectionIndex.ToString(), "");
+                sectionIndex++;
+            }
+
+            format80Data = Convert.FromBase64String(OverlayDataPackString);
+            var overlayDataPack = new byte[1 << 18];
+            Format5.DecodeInto(format80Data, overlayDataPack, 80);
+            
+            foreach (var tile in IsoTileList)
+            {
+                if (tile == null) continue;
+                int idx = tile.Rx + 512 * tile.Ry;
+                byte overlay_id = overlayPack[idx];
+
+                if (overlay_id != 0xff)
+                {
+                    byte overlay_value = overlayDataPack[idx];
+                    var ovl = new Overlay(overlay_id, overlay_value);
+                    ovl.Tile = tile;
+                    OverlayList.Add(ovl);
+                }
+            }
+            return OverlayList;
+        }
+
+        public void SaveOverlay(string path)
+        {
+
+            var overlayPack = new byte[1 << 18];
+            for (int i = 0; i < overlayPack.Length; i++)
+            {
+                overlayPack[i] = 0xff;
+            }
+            var overlayDataPack = new byte[1 << 18];
+            foreach (var overlay in OverlayList)
+            {
+                int index = overlay.Tile.Rx + 512 * overlay.Tile.Ry;
+                overlayPack[index] = overlay.OverlayID;
+                overlayDataPack[index] = overlay.OverlayValue;
+                
+            }
+
+            var compressedPack = Format5.Encode(overlayPack, 80);
+            var compressedDataPack = Format5.Encode(overlayDataPack, 80);
+
+            string compressedPack64 = Convert.ToBase64String(compressedPack);
+            string compressedDataPack64 = Convert.ToBase64String(compressedDataPack);
+            int j = 1;
+            int idx = 0;
+
+            int j2 = 1;
+            int idx2 = 0;
+
+            var saveFile = new IniFile(path);
+            if (saveFile.SectionExists("OverlayPack"))
+                saveFile.RemoveSection("OverlayPack");
+
+            saveFile.AddSection("OverlayPack");
+            if (saveFile.SectionExists("OverlayDataPack"))
+                saveFile.RemoveSection("OverlayDataPack");
+
+            saveFile.AddSection("OverlayDataPack");
+
+            var OverlayPackSection = saveFile.GetSection("OverlayPack");
+            var OverlayDataPackSection = saveFile.GetSection("OverlayDataPack");
+
+            while (idx < compressedPack64.Length)
+            {
+                int adv = Math.Min(70, compressedPack64.Length - idx);//70 is the length of each line
+                OverlayPackSection.SetStringValue(j.ToString(), compressedPack64.Substring(idx, adv));
+                j++;
+                idx += adv;//idx=adv+1
+            }
+            while (idx2 < compressedDataPack64.Length)
+            {
+                int adv = Math.Min(70, compressedDataPack64.Length - idx2);//70 is the length of each line
+                OverlayDataPackSection.SetStringValue(j2.ToString(), compressedDataPack64.Substring(idx2, adv));
+                j2++;
+                idx2 += adv;//idx=adv+1
+            }
+            saveFile.WriteIniFile();
+        }
+
+        public void SaveWorkingOverlay(string path)
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+            var overlayPack = new IniFile(path);
+            overlayPack.AddSection("overlayPack");
+            var mapPackSection = overlayPack.GetSection("overlayPack");
+            int mapPackIndex = 1;
+            //mapPackSection.SetStringValue("0", "Dx,Dy,Rx,Ry,Z,TileNum,SubTile");
+
+            for (int i = 0; i < OverlayList.Count; i++)
+            {
+                var overlay = OverlayList[i];
+                mapPackSection.SetStringValue(mapPackIndex++.ToString(),
+                        overlay.OverlayID.ToString() + "," +
+                        overlay.OverlayValue.ToString());
+
+            }
+            overlayPack.WriteIniFile();
+        }
+
         public void RenderMap(string path)
         {
             Console.WriteLine("------------------------------");

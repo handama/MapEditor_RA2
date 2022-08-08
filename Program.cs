@@ -8,6 +8,37 @@ namespace MapEditor
 {
     class Program
     {
+        void CreateRandomMap(int times)
+        {
+            for (int i = 0; i < times; i++)
+            { 
+                var mapFile = new MapFile();
+
+                WorkingMap.Initialize(200, 200, Theater.TEMPERATE);
+                int range = WorkingMap.Width + WorkingMap.Height;
+
+                //AbstractMap.SetMapUnit(6, 6, "011");
+                WorkingMap.SetMapUnitByEntropy();
+                WorkingMap.FillRemainingEmptyUnitMap();
+                WorkingMap.PlaceMapUnitByAbsMapMatrix();
+
+                mapFile.Width = WorkingMap.Width;
+                mapFile.Height = WorkingMap.Height;
+                mapFile.MapTheater = WorkingMap.Theater;
+                mapFile.IsoTileList = WorkingMap.CreateTileList();
+                mapFile.OverlayList = WorkingMap.OverlayList;
+                mapFile.Unit = WorkingMap.CreateUnitINI();
+                mapFile.Infantry = WorkingMap.CreateInfantryINI();
+                mapFile.Structure = WorkingMap.CreateStructureINI();
+                mapFile.Terrain = WorkingMap.CreateTerrainINI();
+                mapFile.Aircraft = WorkingMap.CreateAircraftINI();
+                mapFile.Smudge = WorkingMap.CreateSmudgeINI();
+                mapFile.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
+            }
+
+            Console.WriteLine("press any key to exist...");
+            Console.ReadKey();
+        }
         static void Main(string[] args)
         {
             /*
@@ -27,6 +58,10 @@ namespace MapEditor
                             _instance.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
                         }*/
 
+            /*            var _instance = new Program();
+                        _instance.CreateRandomMap(10);*/
+
+
 
             var mapFile = new MapFile();
 
@@ -37,39 +72,35 @@ namespace MapEditor
             WorkingMap.SetMapUnitByEntropy();
             WorkingMap.FillRemainingEmptyUnitMap();
             WorkingMap.PlaceMapUnitByAbsMapMatrix();
-            WorkingMap.CreateTechnoLists();
-
-            //AbstractMap.PlaceTileCombination(295, 100, 100);
-            //AbstractMap.RandomPlaceTileCombination(10000);
-
-            /*            for (int i = 0; i < range; i++)
-                        {
-                            for (int j = 0; j < range; j++)
-                            {
-                                absMap.PlaceTileCombination(311, i, j);
-                            }
-                        }
-            */
-
-
 
             mapFile.Width = WorkingMap.Width;
             mapFile.Height = WorkingMap.Height;
             mapFile.MapTheater = WorkingMap.Theater;
             mapFile.IsoTileList = WorkingMap.CreateTileList();
+            mapFile.OverlayList = WorkingMap.OverlayList;
             mapFile.Unit = WorkingMap.CreateUnitINI();
+            mapFile.Infantry = WorkingMap.CreateInfantryINI();
+            mapFile.Structure = WorkingMap.CreateStructureINI();
+            mapFile.Terrain = WorkingMap.CreateTerrainINI();
+            mapFile.Aircraft = WorkingMap.CreateAircraftINI();
+            mapFile.Smudge = WorkingMap.CreateSmudgeINI();
             mapFile.SaveFullMap(Constants.FilePath);
-            mapFile.RenderMap(Constants.FilePath);
+            //mapFile.RenderMap(Constants.FilePath);
 
             Console.WriteLine("press any key to exist...");
             Console.ReadKey();
 
 
+
+
             //_instance.CreateEmptyMap(80, 80);
 
             //_instance.SaveWorkingMapPack();
-
-            //_instance.CreateIsoTileList(@"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\TileInfo\TEMPERATE\001.map");
+            /*            var _instance = new MapFile();
+                        _instance.CreateIsoTileList(@"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\TileInfo\TEMPERATE\045.map");
+                        _instance.ReadOverlay(@"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\TileInfo\TEMPERATE\045.map");
+                        _instance.SaveWorkingOverlay(Constants.WorkFolder + "overlay.txt");
+                        _instance.SaveOverlay(@"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\TileInfo\TEMPERATE\045.map");*/
             //_instance.SaveWorkingMapPack(Constants.WorkFolder + "mapPack.txt");
             //_instance.CreateIsoTileList(Constants.FilePath);
             //_instance.SaveWorkingMapPack(Constants.WorkFolder + "mapPack.txt");

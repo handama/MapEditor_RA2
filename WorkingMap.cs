@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using Weighted_Randomizer;
-using MapEditor.Technos;
+using MapEditor.NonTileObjects;
 
 namespace MapEditor
 {
@@ -22,6 +22,12 @@ namespace MapEditor
         public static List<int[]> PlacedAbstractMapUnitRecord { get; private set; }
         public static List<FailureAbstractMapUnitRecord> FailureAbsMapUnitRecordList { get; private set; }
         public static List<Unit> UnitList { get; private set; }
+        public static List<Infantry> InfantryList { get; private set; }
+        public static List<Structure> StructureList { get; private set; }
+        public static List<Terrain> TerrainList { get; private set; }
+        public static List<Aircraft> AircraftList { get; private set; }
+        public static List<Smudge> SmudgeList { get; private set; }
+        public static List<Overlay> OverlayList { get; private set; }
         public static void Initialize(int width, int height, Theater theater)
         {
             Width = width;
@@ -35,6 +41,12 @@ namespace MapEditor
             PlacedAbstractMapUnitRecord = new List<int[]>();
             FailureAbsMapUnitRecordList = new List<FailureAbstractMapUnitRecord>();
             UnitList = new List<Unit>();
+            InfantryList = new List<Infantry>();
+            StructureList = new List<Structure>();
+            TerrainList = new List<Terrain>();
+            AircraftList = new List<Aircraft>();
+            SmudgeList = new List<Smudge>();
+            OverlayList = new List<Overlay>();
 
             for (int y = 0; y < range; y++)
             {
@@ -212,7 +224,7 @@ namespace MapEditor
             }            
         }
 
-        public static void CreateTechnoLists()
+        public static void CreateNonTileObjectLists()
         {
             for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
             {
@@ -220,17 +232,110 @@ namespace MapEditor
                 {
                     var absMapMember = AbstractMapMatrix[i, j];
                     var unitList = absMapMember.GetAbstractMapUnit().UnitList;
+                    var infantryList = absMapMember.GetAbstractMapUnit().InfantryList;
+                    var structureList = absMapMember.GetAbstractMapUnit().StructureList;
+                    var terrainList = absMapMember.GetAbstractMapUnit().TerrainList;
+                    var aircraftList = absMapMember.GetAbstractMapUnit().AircraftList;
+                    var smudgeList = absMapMember.GetAbstractMapUnit().SmudgeList;
+                    var overlayList = absMapMember.GetAbstractMapUnit().OverlayList;
+
                     if (unitList.Count > 0)
                     {    
                         for (int k = 0; k < unitList.Count; k++)
                         {
-                            var newUnit = unitList[k].Clone() as Unit;
+                            var newUnit = unitList[k].Clone();
                             newUnit.X = newUnit.RelativeX + i * 15;
                             newUnit.Y = newUnit.RelativeY + j * 15;
 
                             if (IsValidAT(newUnit.X, newUnit.Y))
                             {
                                 UnitList.Add(newUnit);
+                            }
+                        }
+                    }
+                    if (infantryList.Count > 0)
+                    {
+                        for (int k = 0; k < infantryList.Count; k++)
+                        {
+                            var newInfantry = infantryList[k].Clone();
+                            newInfantry.X = newInfantry.RelativeX + i * 15;
+                            newInfantry.Y = newInfantry.RelativeY + j * 15;
+
+                            if (IsValidAT(newInfantry.X, newInfantry.Y))
+                            {
+                                InfantryList.Add(newInfantry);
+                            }
+                        }
+                    }
+                    if (structureList.Count > 0)
+                    {
+                        for (int k = 0; k < structureList.Count; k++)
+                        {
+                            var newStructure = structureList[k].Clone();
+                            newStructure.X = newStructure.RelativeX + i * 15;
+                            newStructure.Y = newStructure.RelativeY + j * 15;
+
+                            if (IsValidAT(newStructure.X, newStructure.Y))
+                            {
+                                StructureList.Add(newStructure);
+                            }
+                        }
+                    }
+                    if (terrainList.Count > 0)
+                    {
+                        for (int k = 0; k < terrainList.Count; k++)
+                        {
+                            var newTerrain = terrainList[k].Clone();
+                            newTerrain.X = newTerrain.RelativeX + i * 15;
+                            newTerrain.Y = newTerrain.RelativeY + j * 15;
+
+                            if (IsValidAT(newTerrain.X, newTerrain.Y))
+                            {
+                                TerrainList.Add(newTerrain);
+                            }
+                        }
+                    }
+                    if (aircraftList.Count > 0)
+                    {
+                        for (int k = 0; k < aircraftList.Count; k++)
+                        {
+                            var newAircraft = aircraftList[k].Clone();
+                            newAircraft.X = newAircraft.RelativeX + i * 15;
+                            newAircraft.Y = newAircraft.RelativeY + j * 15;
+
+                            if (IsValidAT(newAircraft.X, newAircraft.Y))
+                            {
+                                AircraftList.Add(newAircraft);
+                            }
+                        }
+                    }
+                    if (smudgeList.Count > 0)
+                    {
+                        for (int k = 0; k < smudgeList.Count; k++)
+                        {
+                            var newSmudge = smudgeList[k].Clone();
+                            newSmudge.X = newSmudge.RelativeX + i * 15;
+                            newSmudge.Y = newSmudge.RelativeY + j * 15;
+
+                            if (IsValidAT(newSmudge.X, newSmudge.Y))
+                            {
+                                SmudgeList.Add(newSmudge);
+                            }
+                        }
+                    }
+                    if (overlayList.Count > 0)
+                    {
+                        for (int k = 0; k < overlayList.Count; k++)
+                        {
+                            var newOverlay =  new Overlay(overlayList[k].OverlayID, overlayList[k].OverlayValue);//overlayList[k].Clone();
+                            var tile = overlayList[k].Tile;
+                            newOverlay.Tile = new IsoTile(tile.Dx, tile.Dy, tile.Rx, tile.Ry, tile.Z, tile.TileNum, tile.SubTile);
+                            newOverlay.Tile.Rx = (ushort)(newOverlay.Tile.Rx + i * 15);
+                            newOverlay.Tile.Ry = (ushort)(newOverlay.Tile.Ry + j * 15);
+
+                            if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
+                            {
+                                OverlayList.Add(newOverlay);
                             }
                         }
                     }
@@ -250,6 +355,7 @@ namespace MapEditor
                     }
                 }
             }
+            CreateNonTileObjectLists();
         }
         public static void SetMapUnit(int x, int y, string mapUnitName)
         {
@@ -691,6 +797,60 @@ namespace MapEditor
                 index++;
             }
             return unitIniSection;
+        }
+        public static IniSection CreateInfantryINI()
+        {
+            var infantryIniSection = new IniSection("Infantry");
+            int index = 0;
+            foreach (var infantry in InfantryList)
+            {
+                infantryIniSection.AddKey(index.ToString(), infantry.CreateINIValue());
+                index++;
+            }
+            return infantryIniSection;
+        }
+        public static IniSection CreateStructureINI()
+        {
+            var structureIniSection = new IniSection("Structures");
+            int index = 0;
+            foreach (var structure in StructureList)
+            {
+                structureIniSection.AddKey(index.ToString(), structure.CreateINIValue());
+                index++;
+            }
+            return structureIniSection;
+        }
+        public static IniSection CreateTerrainINI()
+        {
+            var terrainIniSection = new IniSection("Terrain");
+            foreach (var terrain in TerrainList)
+            {
+                var iniLine = terrain.CreateINILine();
+                terrainIniSection.AddKey(iniLine.Key, iniLine.Value);
+            }
+            return terrainIniSection;
+        }
+        public static IniSection CreateAircraftINI()
+        {
+            var aircraftIniSection = new IniSection("Aircraft");
+            int index = 0;
+            foreach (var aircraft in AircraftList)
+            {
+                aircraftIniSection.AddKey(index.ToString(), aircraft.CreateINIValue());
+                index++;
+            }
+            return aircraftIniSection;
+        }
+        public static IniSection CreateSmudgeINI()
+        {
+            var smudgeIniSection = new IniSection("Smudge");
+            int index = 0;
+            foreach (var smudge in SmudgeList)
+            {
+                smudgeIniSection.AddKey(index.ToString(), smudge.CreateINIValue());
+                index++;
+            }
+            return smudgeIniSection;
         }
     }
 }
