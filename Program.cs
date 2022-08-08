@@ -33,6 +33,7 @@ namespace MapEditor
                 mapFile.Terrain = WorkingMap.CreateTerrainINI();
                 mapFile.Aircraft = WorkingMap.CreateAircraftINI();
                 mapFile.Smudge = WorkingMap.CreateSmudgeINI();
+                mapFile.Waypoint = WorkingMap.CreateWaypointINI();
                 mapFile.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
             }
 
@@ -84,6 +85,7 @@ namespace MapEditor
             mapFile.Terrain = WorkingMap.CreateTerrainINI();
             mapFile.Aircraft = WorkingMap.CreateAircraftINI();
             mapFile.Smudge = WorkingMap.CreateSmudgeINI();
+            mapFile.Waypoint = WorkingMap.CreateWaypointINI();
             mapFile.SaveFullMap(Constants.FilePath);
             //mapFile.RenderMap(Constants.FilePath);
 

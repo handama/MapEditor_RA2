@@ -100,6 +100,7 @@
     <Compile Include="NonTileObjects\Structure.cs" />
     <Compile Include="NonTileObjects\Infantry.cs" />
     <Compile Include="NonTileObjects\Terrain.cs" />
+    <Compile Include="NonTileObjects\Waypoint.cs" />
     <Compile Include="WorkingMap.cs" />
     <Compile Include="AbstractMap.cs" />
     <Compile Include="Program.cs" />

@@ -7,10 +7,6 @@ StartX=233
 StartY=30
 NumberStartingPoints=0
 
-[AircraftTypes]
-
-[TerrainTypes]
-
 ; this is a hidden preview
 [Preview]
 Size=0,0,106,61
@@ -389,8 +385,6 @@ TiberiumExplosive=no
 DestroyableBridges=yes
 
 [Tags]
-
-[Waypoints]
 
 [YuriCountry]
 IQ=0

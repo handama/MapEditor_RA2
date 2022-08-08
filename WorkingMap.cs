@@ -28,6 +28,7 @@ namespace MapEditor
         public static List<Aircraft> AircraftList { get; private set; }
         public static List<Smudge> SmudgeList { get; private set; }
         public static List<Overlay> OverlayList { get; private set; }
+        public static List<Waypoint> WaypointList { get; private set; }
         public static void Initialize(int width, int height, Theater theater)
         {
             Width = width;
@@ -47,6 +48,7 @@ namespace MapEditor
             AircraftList = new List<Aircraft>();
             SmudgeList = new List<Smudge>();
             OverlayList = new List<Overlay>();
+            WaypointList = new List<Waypoint>();
 
             for (int y = 0; y < range; y++)
             {
@@ -238,6 +240,7 @@ namespace MapEditor
                     var aircraftList = absMapMember.GetAbstractMapUnit().AircraftList;
                     var smudgeList = absMapMember.GetAbstractMapUnit().SmudgeList;
                     var overlayList = absMapMember.GetAbstractMapUnit().OverlayList;
+                    var waypointList = absMapMember.GetAbstractMapUnit().WaypointList;
 
                     if (unitList.Count > 0)
                     {    
@@ -336,6 +339,20 @@ namespace MapEditor
                             if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
                             {
                                 OverlayList.Add(newOverlay);
+                            }
+                        }
+                    }
+                    if (waypointList.Count > 0)
+                    {
+                        for (int k = 0; k < waypointList.Count; k++)
+                        {
+                            var newWaypoint = waypointList[k].Clone();
+                            newWaypoint.X = newWaypoint.RelativeX + i * 15;
+                            newWaypoint.Y = newWaypoint.RelativeY + j * 15;
+
+                            if (IsValidAT(newWaypoint.X, newWaypoint.Y))
+                            {
+                                WaypointList.Add(newWaypoint);
                             }
                         }
                     }
@@ -851,6 +868,18 @@ namespace MapEditor
                 index++;
             }
             return smudgeIniSection;
+        }
+        public static IniSection CreateWaypointINI()
+        {
+            var waypointIniSection = new IniSection("Waypoints");
+            int index = 0;
+            foreach (var waypoint in WaypointList)
+            {
+                var iniLine = waypoint.CreateINILine();
+                waypointIniSection.AddKey(index.ToString(), iniLine.Value);
+                index++;
+            }
+            return waypointIniSection;
         }
     }
 }

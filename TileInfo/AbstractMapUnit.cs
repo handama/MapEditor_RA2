@@ -27,6 +27,7 @@ namespace MapEditor.TileInfo
         public List<Aircraft> AircraftList { get; private set; }
         public List<Smudge> SmudgeList { get; private set; }
         public List<Overlay> OverlayList { get; private set; }
+        public List<Waypoint> WaypointList { get; private set; }
 
         public void Initialize(FileInfo file)
         {
@@ -37,6 +38,7 @@ namespace MapEditor.TileInfo
             AircraftList = new List<Aircraft>();
             SmudgeList = new List<Smudge>();
             OverlayList = new List<Overlay>();
+            WaypointList = new List<Waypoint>();
 
             var map = new MapFile();
             map.CreateIsoTileList(file.FullName);
@@ -164,6 +166,17 @@ namespace MapEditor.TileInfo
                     smudge.Initialize(smudgeString.Value);
                     if (smudge != null && smudge.RelativeX < 15 && smudge.RelativeX >= 0 && smudge.RelativeY < 15 && smudge.RelativeY >= 0)
                         SmudgeList.Add(smudge);
+                }
+            }
+            if (mapFile.SectionExists("Waypoints"))
+            {
+                var waypointSection = mapFile.GetSection("Waypoints");
+                foreach (var waypointLine in waypointSection.Keys)
+                {
+                    var waypoint = new Waypoint();
+                    waypoint.Initialize(waypointLine);
+                    if (waypoint != null && waypoint.RelativeX < 15 && waypoint.RelativeX >= 0 && waypoint.RelativeY < 15 && waypoint.RelativeY >= 0)
+                        WaypointList.Add(waypoint);
                 }
             }
         }

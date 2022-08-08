@@ -26,6 +26,7 @@ namespace MapEditor
         public IniSection Terrain = new IniSection("Terrain");
         public IniSection Aircraft = new IniSection("Aircraft");
         public IniSection Smudge = new IniSection("Smudge");
+        public IniSection Waypoint = new IniSection("Waypoints");
         public void CreateIsoTileList(string filePath)
         {
             var MapFile = new IniFile(filePath);
@@ -251,6 +252,7 @@ namespace MapEditor
             fullMap.AddSection(Terrain);
             fullMap.AddSection(Aircraft);
             fullMap.AddSection(Smudge);
+            fullMap.AddSection(Waypoint);
             fullMap.WriteIniFile(path);
             SaveIsoMapPack5(path);
             SaveOverlay(path);
