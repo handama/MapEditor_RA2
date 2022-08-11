@@ -1,4 +1,11 @@
-; Map created with Handama Map Editor
+[NAYARD]
+TechLevel=11
+
+[GAYARD]
+TechLevel=11
+
+[YAYARD]
+TechLevel=11
 
 [Header]
 Width=45
@@ -173,7 +180,8 @@ PercentBuilt=0
 PlayerControl=no
 
 [Basic]
-Name=No name
+Name=Random Map
+Author=Handama
 Percent=0
 GameMode=standard
 HomeCell=98

@@ -11,6 +11,7 @@ namespace MapEditor
         public int X { get; private set; }
         public int Y { get; private set; }
         public bool IsOnMap { get; private set; }
+        public bool IsOnVisibleMap { get; private set; }
         public bool Edited { get; private set; }
         public void Initialize(int x, int y)
         {
@@ -21,7 +22,15 @@ namespace MapEditor
             TileNum = (int)Common._000_Empty;
             SubTile = 0;
             bool isOnMap = false;
+            bool isOnVisibleMap = false;
             Used = true;
+            if (Y > WorkingMap.Size[0] - X + 3
+                && Y < 2 * WorkingMap.Size[1] + WorkingMap.Size[0] + 1 - X - 5
+                && Y < X + WorkingMap.Size[0] - 2
+                && Y > X - WorkingMap.Size[0] + 2)
+            {
+                isOnVisibleMap = true;
+            }
             if (Y > WorkingMap.Size[0] - X
                 && Y < 2 * WorkingMap.Size[1] + WorkingMap.Size[0] + 1 - X
                 && Y < X + WorkingMap.Size[0]
@@ -30,6 +39,7 @@ namespace MapEditor
                 isOnMap = true;
             }
             IsOnMap = isOnMap;
+            IsOnVisibleMap = isOnVisibleMap;
         }
         public void SetProperty(int x, int y, int z, TileInfo.AbstractTileType absTileType)
         {

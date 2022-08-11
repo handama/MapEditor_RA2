@@ -20,8 +20,8 @@ namespace MapEditor.NonTileObjects
             string x = key.Substring(key.Length - 3, 3);
             string y = key.Substring(0, key.Length - 3);
             Name = iniLine.Value;
-            RelativeX = int.Parse(x) - 13;
-            RelativeY = int.Parse(y) - 13;
+            RelativeX = int.Parse(x) - Constants.StartingXY;
+            RelativeY = int.Parse(y) - Constants.StartingXY;
         }
         public Terrain Clone()
         {

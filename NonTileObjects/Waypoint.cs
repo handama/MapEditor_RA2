@@ -20,8 +20,8 @@ namespace MapEditor.NonTileObjects
             string x = value.Substring(value.Length - 3, 3);
             string y = value.Substring(0, value.Length - 3);
             Index = int.Parse(iniLine.Key);
-            RelativeX = int.Parse(x) - 13;
-            RelativeY = int.Parse(y) - 13;
+            RelativeX = int.Parse(x) - Constants.StartingXY;
+            RelativeY = int.Parse(y) - Constants.StartingXY;
         }
         public Waypoint Clone()
         {

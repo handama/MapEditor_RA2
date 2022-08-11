@@ -32,8 +32,8 @@ namespace MapEditor.NonTileObjects
                 Owner = values[0];
                 Name = values[1];
                 Strength = int.Parse(values[2]);
-                RelativeX = int.Parse(values[3]) - 13;
-                RelativeY = int.Parse(values[4]) - 13;
+                RelativeX = int.Parse(values[3]) - Constants.StartingXY;
+                RelativeY = int.Parse(values[4]) - Constants.StartingXY;
                 Direction = int.Parse(values[5]);
                 State = values[6];
                 Tag = values[7];

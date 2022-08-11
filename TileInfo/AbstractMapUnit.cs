@@ -12,14 +12,15 @@ namespace MapEditor.TileInfo
     public class AbstractMapUnit
     {
         public string MapUnitName;
-        public const int Width = 15;
-        public const int Height = 15;
-        public AbstractTileType[,] AbsTileType = new AbstractTileType[Width, Height];
+        public int Width = Constants.SideLength;
+        public int Height = Constants.SideLength;
+        public AbstractTileType[,] AbsTileType = new AbstractTileType[Constants.SideLength, Constants.SideLength];
         public int NWConnectionType = -1;
         public int NEConnectionType = -1;
         public int SWConnectionType = -1;
         public int SEConnectionType = -1;
         public int Weight = 0;
+        
         public List<Unit> UnitList { get; private set; }
         public List<Infantry> InfantryList { get; private set; }
         public List<Structure> StructureList { get; private set; }
@@ -39,7 +40,7 @@ namespace MapEditor.TileInfo
             SmudgeList = new List<Smudge>();
             OverlayList = new List<Overlay>();
             WaypointList = new List<Waypoint>();
-
+            
             var map = new MapFile();
             map.CreateIsoTileList(file.FullName);
             var overlayList = map.ReadOverlay(file.FullName);
@@ -51,7 +52,7 @@ namespace MapEditor.TileInfo
                     var absTileType = new AbstractTileType();
                     foreach (var tile in map.IsoTileList)
                     {
-                        if (tile.Rx == i + 13 && tile.Ry == j + 13)
+                        if (tile.Rx == i + Constants.StartingXY && tile.Ry == j + Constants.StartingXY)
                         {
                             MapUnitName = file.Name.Trim((file.Extension).ToCharArray());
                             absTileType.TileNum = tile.TileNum;
@@ -62,7 +63,7 @@ namespace MapEditor.TileInfo
                     }
                     foreach (var overlay in overlayList)
                     {
-                        if (overlay.Tile.Rx == i + 13 && overlay.Tile.Ry == j + 13)
+                        if (overlay.Tile.Rx == i + Constants.StartingXY && overlay.Tile.Ry == j + Constants.StartingXY)
                         {
                             overlay.Tile.Rx = (ushort)i;
                             overlay.Tile.Ry = (ushort)j;
@@ -75,19 +76,19 @@ namespace MapEditor.TileInfo
             {
                 foreach (var tile in map.IsoTileList)
                 {
-                    if (tile.Rx == 10 && tile.Ry == i + 13 && tile.TileNum != -1 && tile.TileNum != 0)
+                    if (tile.Rx == Constants.StartingXY - 3 && tile.Ry == i + Constants.StartingXY && tile.TileNum == WorkingMap.IndicatorNum)
                     {
                         NWConnectionType = i;
                     }
-                    if (tile.Rx == 30 && tile.Ry == i + 13 && tile.TileNum != -1 && tile.TileNum != 0)
+                    if (tile.Rx == Constants.StartingXY + Width + 2 && tile.Ry == i + Constants.StartingXY && tile.TileNum == WorkingMap.IndicatorNum)
                     {
                         SEConnectionType = i;
                     }
-                    if (tile.Ry == 10 && tile.Rx == i + 13 && tile.TileNum != -1 && tile.TileNum != 0)
+                    if (tile.Ry == Constants.StartingXY - 3 && tile.Rx == i + Constants.StartingXY && tile.TileNum == WorkingMap.IndicatorNum)
                     {
                         NEConnectionType = i;
                     }
-                    if (tile.Ry == 30 && tile.Rx == i + 13 && tile.TileNum != -1 && tile.TileNum != 0)
+                    if (tile.Ry == Constants.StartingXY + Width + 2 && tile.Rx == i + Constants.StartingXY && tile.TileNum == WorkingMap.IndicatorNum)
                     {
                         SWConnectionType = i;
                     }
@@ -95,7 +96,7 @@ namespace MapEditor.TileInfo
             }
             foreach (var tile in map.IsoTileList)
             { 
-                if (tile.Rx < 8 && tile.TileNum == 327)
+                if (tile.Rx < Constants.StartingXY - 5 && tile.TileNum == WorkingMap.IndicatorNum)
                 {
                     Weight++;
                 }
@@ -109,7 +110,7 @@ namespace MapEditor.TileInfo
                 {
                     var unit = new Unit();
                     unit.Initialize(unitString.Value);
-                    if (unit != null && unit.RelativeX < 15 && unit.RelativeX >= 0 && unit.RelativeY < 15 && unit.RelativeY >= 0)
+                    if (unit != null && unit.RelativeX < Constants.SideLength && unit.RelativeX >= 0 && unit.RelativeY < Constants.SideLength && unit.RelativeY >= 0)
                         UnitList.Add(unit);
                 }
             }
@@ -120,7 +121,7 @@ namespace MapEditor.TileInfo
                 {
                     var infantry = new Infantry();
                     infantry.Initialize(infantryString.Value);
-                    if (infantry != null && infantry.RelativeX < 15 && infantry.RelativeX >= 0 && infantry.RelativeY < 15 && infantry.RelativeY >= 0)
+                    if (infantry != null && infantry.RelativeX < Constants.SideLength && infantry.RelativeX >= 0 && infantry.RelativeY < Constants.SideLength && infantry.RelativeY >= 0)
                         InfantryList.Add(infantry);
                 }
             }
@@ -131,7 +132,7 @@ namespace MapEditor.TileInfo
                 {
                     var structure = new Structure();
                     structure.Initialize(structureString.Value);
-                    if (structure != null && structure.RelativeX < 15 && structure.RelativeX >= 0 && structure.RelativeY < 15 && structure.RelativeY >= 0)
+                    if (structure != null && structure.RelativeX < Constants.SideLength && structure.RelativeX >= 0 && structure.RelativeY < Constants.SideLength && structure.RelativeY >= 0)
                         StructureList.Add(structure);
                 }
             }
@@ -142,7 +143,7 @@ namespace MapEditor.TileInfo
                 {
                     var terrain = new Terrain();
                     terrain.Initialize(terrainLine);
-                    if (terrain != null && terrain.RelativeX < 15 && terrain.RelativeX >= 0 && terrain.RelativeY < 15 && terrain.RelativeY >= 0)
+                    if (terrain != null && terrain.RelativeX < Constants.SideLength && terrain.RelativeX >= 0 && terrain.RelativeY < Constants.SideLength && terrain.RelativeY >= 0)
                         TerrainList.Add(terrain);
                 }
             }
@@ -153,7 +154,7 @@ namespace MapEditor.TileInfo
                 {
                     var aircraft = new Aircraft();
                     aircraft.Initialize(aircraftString.Value);
-                    if (aircraft != null && aircraft.RelativeX < 15 && aircraft.RelativeX >= 0 && aircraft.RelativeY < 15 && aircraft.RelativeY >= 0)
+                    if (aircraft != null && aircraft.RelativeX < Constants.SideLength && aircraft.RelativeX >= 0 && aircraft.RelativeY < Constants.SideLength && aircraft.RelativeY >= 0)
                         AircraftList.Add(aircraft);
                 }
             }
@@ -164,7 +165,7 @@ namespace MapEditor.TileInfo
                 {
                     var smudge = new Smudge();
                     smudge.Initialize(smudgeString.Value);
-                    if (smudge != null && smudge.RelativeX < 15 && smudge.RelativeX >= 0 && smudge.RelativeY < 15 && smudge.RelativeY >= 0)
+                    if (smudge != null && smudge.RelativeX < Constants.SideLength && smudge.RelativeX >= 0 && smudge.RelativeY < Constants.SideLength && smudge.RelativeY >= 0)
                         SmudgeList.Add(smudge);
                 }
             }
@@ -175,7 +176,7 @@ namespace MapEditor.TileInfo
                 {
                     var waypoint = new Waypoint();
                     waypoint.Initialize(waypointLine);
-                    if (waypoint != null && waypoint.RelativeX < 15 && waypoint.RelativeX >= 0 && waypoint.RelativeY < 15 && waypoint.RelativeY >= 0)
+                    if (waypoint != null && waypoint.RelativeX < Constants.SideLength && waypoint.RelativeX >= 0 && waypoint.RelativeY < Constants.SideLength && waypoint.RelativeY >= 0)
                         WaypointList.Add(waypoint);
                 }
             }

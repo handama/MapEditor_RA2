@@ -7,6 +7,7 @@ using System.Text;
 using System.IO;
 using Weighted_Randomizer;
 using MapEditor.NonTileObjects;
+using Serilog;
 
 namespace MapEditor
 {
@@ -18,7 +19,7 @@ namespace MapEditor
         public static AbstractTile[,] AbsTile { get; private set; }
         public static int Theater { get; private set; }
         public static List<AbstractMapUnit> AbstractMapUnitList { get; private set; }
-        public static AbstractMap[,] AbstractMapMatrix { get; private set; }
+        public static AbstractMapMember[,] AbstractMapMemberMatrix { get; private set; }
         public static List<int[]> PlacedAbstractMapUnitRecord { get; private set; }
         public static List<FailureAbstractMapUnitRecord> FailureAbsMapUnitRecordList { get; private set; }
         public static List<Unit> UnitList { get; private set; }
@@ -29,6 +30,7 @@ namespace MapEditor
         public static List<Smudge> SmudgeList { get; private set; }
         public static List<Overlay> OverlayList { get; private set; }
         public static List<Waypoint> WaypointList { get; private set; }
+        public static int IndicatorNum { get; private set; }
         public static void Initialize(int width, int height, Theater theater)
         {
             Width = width;
@@ -38,7 +40,7 @@ namespace MapEditor
             AbsTile = new AbstractTile[range, range];
             Size = new int[2] { Width, Height };
             AbstractMapUnitList = new List<AbstractMapUnit>();
-            AbstractMapMatrix = new AbstractMap [(int)Math.Ceiling((float)range / 15.0), (int)Math.Ceiling((float)range / 15.0)];
+            AbstractMapMemberMatrix = new AbstractMapMember [(int)Math.Ceiling((float)range / (float)Constants.SideLength), (int)Math.Ceiling((float)range / (float)Constants.SideLength)];
             PlacedAbstractMapUnitRecord = new List<int[]>();
             FailureAbsMapUnitRecordList = new List<FailureAbstractMapUnitRecord>();
             UnitList = new List<Unit>();
@@ -59,68 +61,72 @@ namespace MapEditor
                     AbsTile[x, y] = absTile;
                 }
             }
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
-                    AbstractMapMatrix[i, j] = new AbstractMap();
+                    AbstractMapMemberMatrix[i, j] = new AbstractMapMember();
                 }
             }
 
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
-                    for (int x = 0; x < 15; x++)
+                    AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap = true;
+                    for (int x = 0; x < Constants.SideLength; x++)
                     {
-                        for (int y = 0; y < 15; y++)
+                        for (int y = 0; y < Constants.SideLength; y++)
                         {
-                            
-                            if (i * 15 + x < range && j * 15 + y < range)
+                            if (i * Constants.SideLength + x < range && j * Constants.SideLength + y < range)
                             {
-                                if (IsValidAT(i * 15 + x, j * 15 + y))
+                                if (IsValidAT(i * Constants.SideLength + x, j * Constants.SideLength + y))
                                 {
-                                    if (AbsTile[i * 15 + x, j * 15 + y].IsOnMap)
-                                        AbstractMapMatrix[i, j].IsOnMap = true;
+                                    if (AbsTile[i * Constants.SideLength + x, j * Constants.SideLength + y].IsOnMap)
+                                        AbstractMapMemberMatrix[i, j].IsOnMap = true;
+                                    if (!AbsTile[i * Constants.SideLength + x, j * Constants.SideLength + y].IsOnVisibleMap)
+                                        AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap = false;
                                 }
                             }
                         }
                     }
+                    if (!AbstractMapMemberMatrix[i, j].IsOnMap)
+                        AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap = false;
 
-                    if (!AbstractMapMatrix[i, j].IsOnMap)
-                        AbstractMapMatrix[i, j].Placed = true;
+                    if (!AbstractMapMemberMatrix[i, j].IsOnMap)
+                        AbstractMapMemberMatrix[i, j].Placed = true;
 
                     if (IsValidAUM(i,j -1))
                     {
-                        if (!AbstractMapMatrix[i, j - 1].IsOnMap)
-                            AbstractMapMatrix[i, j].NEConnected = true;
+                        if (!AbstractMapMemberMatrix[i, j - 1].IsOnMap)
+                            AbstractMapMemberMatrix[i, j].NEConnected = true;
                     }
                     else
-                        AbstractMapMatrix[i, j].NEConnected = true;
+                        AbstractMapMemberMatrix[i, j].NEConnected = true;
 
                     if (IsValidAUM(i, j + 1))
                     {
-                        if (!AbstractMapMatrix[i, j + 1].IsOnMap)
-                            AbstractMapMatrix[i, j].SWConnected = true;
+                        if (!AbstractMapMemberMatrix[i, j + 1].IsOnMap)
+                            AbstractMapMemberMatrix[i, j].SWConnected = true;
                     }
                     else
-                        AbstractMapMatrix[i, j].SWConnected = true;
+                        AbstractMapMemberMatrix[i, j].SWConnected = true;
 
                     if (IsValidAUM(i - 1, j))
                     {
-                        if (!AbstractMapMatrix[i - 1, j].IsOnMap)
-                            AbstractMapMatrix[i, j].NWConnected = true;
+                        if (!AbstractMapMemberMatrix[i - 1, j].IsOnMap)
+                            AbstractMapMemberMatrix[i, j].NWConnected = true;
                     }
                     else
-                        AbstractMapMatrix[i, j].NWConnected = true;
+                        AbstractMapMemberMatrix[i, j].NWConnected = true;
 
                     if (IsValidAUM(i + 1, j))
                     {
-                        if (!AbstractMapMatrix[i + 1, j].IsOnMap)
-                            AbstractMapMatrix[i, j].SEConnected = true;
+                        if (!AbstractMapMemberMatrix[i + 1, j].IsOnMap)
+                            AbstractMapMemberMatrix[i, j].SEConnected = true;
                     }
                     else
-                        AbstractMapMatrix[i, j].SEConnected = true;
+                        AbstractMapMemberMatrix[i, j].SEConnected = true;
                 }
             }
 
@@ -128,7 +134,7 @@ namespace MapEditor
         }
         public static bool IsValidAUM(int x, int y)
         {
-            if (x < AbstractMapMatrix.GetLength(0) && x >= 0 && y < AbstractMapMatrix.GetLength(1) && y >= 0)
+            if (x < AbstractMapMemberMatrix.GetLength(0) && x >= 0 && y < AbstractMapMemberMatrix.GetLength(1) && y >= 0)
                 return true;
             else
                 return false;
@@ -144,25 +150,30 @@ namespace MapEditor
         public static void SterilizeMapUnit()
         {
             string workingPath = "";
-            if (WorkingMap.Theater == 0)
+            if (Theater == 0)
                 workingPath = Constants.TEMPERATEPath;
-            else if (WorkingMap.Theater == 1)
+            else if (Theater == 1)
                 workingPath = Constants.SNOWPath;
-            else if (WorkingMap.Theater == 2)
+            else if (Theater == 2)
                 workingPath = Constants.URBANPath;
-            else if (WorkingMap.Theater == 3)
+            else if (Theater == 3)
                 workingPath = Constants.NEWURBANPath;
-            else if (WorkingMap.Theater == 4)
+            else if (Theater == 4)
                 workingPath = Constants.LUNARPath;
-            else if (WorkingMap.Theater == 5)
+            else if (Theater == 5)
                 workingPath = Constants.DESERTPath;
             else
                 return;
 
             DirectoryInfo root = new DirectoryInfo(workingPath);
+
+            var indicatorMap = new MapFile();
+            indicatorMap.CreateIsoTileList(workingPath + "indicator.map");
+            IndicatorNum = indicatorMap.IsoTileList[0].TileNum;
+
             foreach (FileInfo f in root.GetFiles())
             {
-                if (f.Extension ==".map" || f.Extension == ".yrm" || f.Extension == ".mpr")
+                if ((f.Extension ==".map" || f.Extension == ".yrm" || f.Extension == ".mpr") && f.Name != "indicator.map")
                 {
                     var absMapUnit = new AbstractMapUnit();
                     absMapUnit.Initialize(f);
@@ -183,25 +194,25 @@ namespace MapEditor
             }
             return absMapUnit;
         }
-        public static AbstractMap[] GetNearbyAbstractMapMemberInfo(int x, int y)
+        public static AbstractMapMember[] GetNearbyAbstractMapMemberInfo(int x, int y)
         {
             //order : NE NW SW SE
-            var absMapMember = new AbstractMap[4];
+            var absMapMember = new AbstractMapMember[4];
             if (IsValidAUM(x, y - 1))
             {
-                absMapMember[0] = AbstractMapMatrix[x, y - 1];
+                absMapMember[0] = AbstractMapMemberMatrix[x, y - 1];
             }
             if (IsValidAUM(x - 1, y))
             {
-                absMapMember[1] = AbstractMapMatrix[x - 1, y];
+                absMapMember[1] = AbstractMapMemberMatrix[x - 1, y];
             }
             if (IsValidAUM(x, y + 1))
             {
-                absMapMember[2] = AbstractMapMatrix[x, y + 1];
+                absMapMember[2] = AbstractMapMemberMatrix[x, y + 1];
             }
             if (IsValidAUM(x + 1, y))
             {
-                absMapMember[3] = AbstractMapMatrix[x + 1, y];
+                absMapMember[3] = AbstractMapMemberMatrix[x + 1, y];
             }
             return absMapMember;
         }
@@ -209,18 +220,18 @@ namespace MapEditor
         public static void PlaceMapUnitToWorkingMap(int x, int y, string mapUnitName)
         {
             var absMapUnit = GetAbstractMapUnitByName(mapUnitName);
-            AbstractMapMatrix[x, y].Placed = true;
+            AbstractMapMemberMatrix[x, y].Placed = true;
 
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i < Constants.SideLength; i++)
             {
-                for (int j = 0; j < 15; j++)
+                for (int j = 0; j < Constants.SideLength; j++)
                 {
-                    if (IsValidAT(x * 15 + i, y * 15 + j))
+                    if (IsValidAT(x * Constants.SideLength + i, y * Constants.SideLength + j))
                     {
                         var absTileType = absMapUnit.AbsTileType[i, j];
                         var absTile = new AbstractTile();
-                        absTile.SetProperty(x * 15 + i, y * 15 + j, 0, absTileType);
-                        AbsTile[x * 15 + i, y * 15 + j] = absTile;
+                        absTile.SetProperty(x * Constants.SideLength + i, y * Constants.SideLength + j, 0, absTileType);
+                        AbsTile[x * Constants.SideLength + i, y * Constants.SideLength + j] = absTile;
                     }
                 }
             }            
@@ -228,11 +239,13 @@ namespace MapEditor
 
         public static void CreateNonTileObjectLists()
         {
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            Log.Information("******************************************************");
+            Log.Information("Start creating non-tile objects");
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
-                    var absMapMember = AbstractMapMatrix[i, j];
+                    var absMapMember = AbstractMapMemberMatrix[i, j];
                     var unitList = absMapMember.GetAbstractMapUnit().UnitList;
                     var infantryList = absMapMember.GetAbstractMapUnit().InfantryList;
                     var structureList = absMapMember.GetAbstractMapUnit().StructureList;
@@ -242,133 +255,143 @@ namespace MapEditor
                     var overlayList = absMapMember.GetAbstractMapUnit().OverlayList;
                     var waypointList = absMapMember.GetAbstractMapUnit().WaypointList;
 
-                    if (unitList.Count > 0)
+                    if (unitList != null && unitList.Count > 0)
                     {    
                         for (int k = 0; k < unitList.Count; k++)
                         {
                             var newUnit = unitList[k].Clone();
-                            newUnit.X = newUnit.RelativeX + i * 15;
-                            newUnit.Y = newUnit.RelativeY + j * 15;
+                            newUnit.X = newUnit.RelativeX + i * Constants.SideLength;
+                            newUnit.Y = newUnit.RelativeY + j * Constants.SideLength;
 
                             if (IsValidAT(newUnit.X, newUnit.Y))
                             {
                                 UnitList.Add(newUnit);
+                                Log.Information("Add unit [{0}] in [{1},{2}]", newUnit.Name, newUnit.X, newUnit.Y);
                             }
                         }
                     }
-                    if (infantryList.Count > 0)
+                    if (infantryList != null && infantryList.Count > 0)
                     {
                         for (int k = 0; k < infantryList.Count; k++)
                         {
                             var newInfantry = infantryList[k].Clone();
-                            newInfantry.X = newInfantry.RelativeX + i * 15;
-                            newInfantry.Y = newInfantry.RelativeY + j * 15;
+                            newInfantry.X = newInfantry.RelativeX + i * Constants.SideLength;
+                            newInfantry.Y = newInfantry.RelativeY + j * Constants.SideLength;
 
                             if (IsValidAT(newInfantry.X, newInfantry.Y))
                             {
                                 InfantryList.Add(newInfantry);
+                                Log.Information("Add infantry [{0}] in [{1},{2}]", newInfantry.Name, newInfantry.X, newInfantry.Y);
                             }
                         }
                     }
-                    if (structureList.Count > 0)
+                    if (structureList != null && structureList.Count > 0)
                     {
                         for (int k = 0; k < structureList.Count; k++)
                         {
                             var newStructure = structureList[k].Clone();
-                            newStructure.X = newStructure.RelativeX + i * 15;
-                            newStructure.Y = newStructure.RelativeY + j * 15;
+                            newStructure.X = newStructure.RelativeX + i * Constants.SideLength;
+                            newStructure.Y = newStructure.RelativeY + j * Constants.SideLength;
 
                             if (IsValidAT(newStructure.X, newStructure.Y))
                             {
                                 StructureList.Add(newStructure);
+                                Log.Information("Add structure [{0}] in [{1},{2}]", newStructure.Name, newStructure.X, newStructure.Y);
                             }
                         }
                     }
-                    if (terrainList.Count > 0)
+                    if (terrainList != null && terrainList.Count > 0)
                     {
                         for (int k = 0; k < terrainList.Count; k++)
                         {
                             var newTerrain = terrainList[k].Clone();
-                            newTerrain.X = newTerrain.RelativeX + i * 15;
-                            newTerrain.Y = newTerrain.RelativeY + j * 15;
+                            newTerrain.X = newTerrain.RelativeX + i * Constants.SideLength;
+                            newTerrain.Y = newTerrain.RelativeY + j * Constants.SideLength;
 
                             if (IsValidAT(newTerrain.X, newTerrain.Y))
                             {
                                 TerrainList.Add(newTerrain);
+                                Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
                             }
                         }
                     }
-                    if (aircraftList.Count > 0)
+                    if (aircraftList != null && aircraftList.Count > 0)
                     {
                         for (int k = 0; k < aircraftList.Count; k++)
                         {
                             var newAircraft = aircraftList[k].Clone();
-                            newAircraft.X = newAircraft.RelativeX + i * 15;
-                            newAircraft.Y = newAircraft.RelativeY + j * 15;
+                            newAircraft.X = newAircraft.RelativeX + i * Constants.SideLength;
+                            newAircraft.Y = newAircraft.RelativeY + j * Constants.SideLength;
 
                             if (IsValidAT(newAircraft.X, newAircraft.Y))
                             {
                                 AircraftList.Add(newAircraft);
+                                Log.Information("Add aircraft [{0}] in [{1},{2}]", newAircraft.Name, newAircraft.X, newAircraft.Y);
                             }
                         }
                     }
-                    if (smudgeList.Count > 0)
+                    if (smudgeList != null && smudgeList.Count > 0)
                     {
                         for (int k = 0; k < smudgeList.Count; k++)
                         {
                             var newSmudge = smudgeList[k].Clone();
-                            newSmudge.X = newSmudge.RelativeX + i * 15;
-                            newSmudge.Y = newSmudge.RelativeY + j * 15;
+                            newSmudge.X = newSmudge.RelativeX + i * Constants.SideLength;
+                            newSmudge.Y = newSmudge.RelativeY + j * Constants.SideLength;
 
                             if (IsValidAT(newSmudge.X, newSmudge.Y))
                             {
                                 SmudgeList.Add(newSmudge);
+                                Log.Information("Add smudge [{0}] in [{1},{2}]", newSmudge.Name, newSmudge.X, newSmudge.Y);
                             }
                         }
                     }
-                    if (overlayList.Count > 0)
+                    if (waypointList != null && waypointList.Count > 0)
+                    {
+                        for (int k = 0; k < waypointList.Count; k++)
+                        {
+                            var newWaypoint = waypointList[k].Clone();
+                            newWaypoint.X = newWaypoint.RelativeX + i * Constants.SideLength;
+                            newWaypoint.Y = newWaypoint.RelativeY + j * Constants.SideLength;
+
+                            if (IsValidAT(newWaypoint.X, newWaypoint.Y))
+                            {
+                                WaypointList.Add(newWaypoint);
+                                Log.Information("Add waypoint [{0}] in [{1},{2}]", WaypointList.Count() - 1, newWaypoint.X, newWaypoint.Y);
+                            }
+                        }
+                    }
+                    if (overlayList != null && overlayList.Count > 0)
                     {
                         for (int k = 0; k < overlayList.Count; k++)
                         {
                             var newOverlay =  new Overlay(overlayList[k].OverlayID, overlayList[k].OverlayValue);//overlayList[k].Clone();
                             var tile = overlayList[k].Tile;
                             newOverlay.Tile = new IsoTile(tile.Dx, tile.Dy, tile.Rx, tile.Ry, tile.Z, tile.TileNum, tile.SubTile);
-                            newOverlay.Tile.Rx = (ushort)(newOverlay.Tile.Rx + i * 15);
-                            newOverlay.Tile.Ry = (ushort)(newOverlay.Tile.Ry + j * 15);
+                            newOverlay.Tile.Rx = (ushort)(newOverlay.Tile.Rx + i * Constants.SideLength);
+                            newOverlay.Tile.Ry = (ushort)(newOverlay.Tile.Ry + j * Constants.SideLength);
 
                             if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
                             {
                                 OverlayList.Add(newOverlay);
-                            }
-                        }
-                    }
-                    if (waypointList.Count > 0)
-                    {
-                        for (int k = 0; k < waypointList.Count; k++)
-                        {
-                            var newWaypoint = waypointList[k].Clone();
-                            newWaypoint.X = newWaypoint.RelativeX + i * 15;
-                            newWaypoint.Y = newWaypoint.RelativeY + j * 15;
-
-                            if (IsValidAT(newWaypoint.X, newWaypoint.Y))
-                            {
-                                WaypointList.Add(newWaypoint);
+                                Log.Information("Add overlay [{0},{1}] in [{2},{3}]", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);
                             }
                         }
                     }
                 }
-            }
+            } 
+            Log.Information("End of creating non-tile objects");
+            Log.Information("******************************************************");
         }
 
         public static void PlaceMapUnitByAbsMapMatrix()
         {
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 { 
-                    if (AbstractMapMatrix[i,j].IsOnMap)
+                    if (AbstractMapMemberMatrix[i,j].IsOnMap)
                     {
-                        PlaceMapUnitToWorkingMap(i, j, AbstractMapMatrix[i, j].MapUnitName);
+                        PlaceMapUnitToWorkingMap(i, j, AbstractMapMemberMatrix[i, j].MapUnitName);
                     }
                 }
             }
@@ -378,10 +401,37 @@ namespace MapEditor
         {
             if (IsValidAUM(x,y))
             {
-                AbstractMapMatrix[x, y].MapUnitName = mapUnitName;
-                AbstractMapMatrix[x, y].Placed = true;
+                AbstractMapMemberMatrix[x, y].MapUnitName = mapUnitName;
+                AbstractMapMemberMatrix[x, y].Placed = true;
                 RecordPlacedMapUnit(x, y);
             }
+        }
+
+        public static void SetMapUnitTest(int x, int y, string mapUnitName)
+        {
+            if (IsValidAUM(x, y))
+            {
+                AbstractMapMemberMatrix[x, y].MapUnitName = mapUnitName;
+                AbstractMapMemberMatrix[x, y].Placed = true;
+            }
+        }
+        public static void DeleteMapUnitTest(int x, int y)
+        {
+            if (IsValidAUM(x, y))
+            {
+                AbstractMapMemberMatrix[x, y].MapUnitName = "empty";
+                AbstractMapMemberMatrix[x, y].Placed = false;
+            }
+        }
+
+        public static void RandomSetMapUnit(int x, int y, List<string> mapUnitName)
+        {
+            IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
+            foreach(var name in mapUnitName)
+            {
+                randomizer.Add(name, 1);
+            }
+            SetMapUnit(x, y, randomizer.NextWithReplacement());
         }
 
         public static void RecordPlacedMapUnit(int x, int y)
@@ -393,10 +443,11 @@ namespace MapEditor
         {
             if (IsValidAUM(x, y))
             {
-                AbstractMapMatrix[x, y].MapUnitName = "empty";
-                AbstractMapMatrix[x, y].Placed = false;
+                AbstractMapMemberMatrix[x, y].MapUnitName = "empty";
+                AbstractMapMemberMatrix[x, y].Placed = false;
                 UpdateMapUnitInfo();
-
+                Log.Warning("Delete [{0},{1}] because the next step has no valid options", x, y);
+                Log.Information("");
                 int removeIndex = -1;
                 for(int i = 0; i < PlacedAbstractMapUnitRecord.Count; i++)
                 {
@@ -417,7 +468,7 @@ namespace MapEditor
             {
                 UpdateMapUnitInfo();
                 notAllMapUnitsSet = false;
-                foreach (var absMapMember in AbstractMapMatrix)
+                foreach (var absMapMember in AbstractMapMemberMatrix)
                 {
                     if (!(absMapMember.SEConnected
                         && absMapMember.NWConnected
@@ -430,14 +481,13 @@ namespace MapEditor
                 int[] targetMapUnit = GetLowestEntropyMU();
                 if (targetMapUnit[0] == -1 && targetMapUnit[1] == -1)
                 {
-                    Console.WriteLine("------------------------------");
-                    Console.WriteLine("Successfully place all map units!");
-                    Console.WriteLine("------------------------------");
+                    Log.Information("******************************************************");
+                    Log.Information("Successfully place all map units!");
+                    Log.Information("******************************************************");
                     return;
                 }
                 //order : NE NW SW SE
                 var nearbyAbsMapMember = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1]);
-
                 var validMapUnitList = GetValidAbsMapUnitList(nearbyAbsMapMember);
 
                 var failureRecord = new FailureAbstractMapUnitRecord();
@@ -461,40 +511,65 @@ namespace MapEditor
                     }
                 }
 
+                //check after placing some MU, its nearby MUs have options or not.
+                var nearbyAbsMapMemberOfNE = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1] - 1);
+                var nearbyAbsMapMemberOfNW = GetNearbyAbstractMapMemberInfo(targetMapUnit[0] - 1, targetMapUnit[1]);
+                var nearbyAbsMapMemberOfSE = GetNearbyAbstractMapMemberInfo(targetMapUnit[0] + 1, targetMapUnit[1]);
+                var nearbyAbsMapMemberOfSW = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1] + 1);
+
+                if (validMapUnitList.Count > 0)
+                {
+                    for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
+                    {
+                        SetMapUnitTest(targetMapUnit[0], targetMapUnit[1], validMapUnitList[i].MapUnitName);
+                        var validMapUnitListOfNE = GetValidAbsMapUnitList(nearbyAbsMapMemberOfNE);
+                        if (validMapUnitListOfNE.Count < 1)
+                        {
+                            Log.Warning(validMapUnitList[i].MapUnitName + " is removed because it will cause further struggle");
+                            validMapUnitList.RemoveAt(i);
+                        }
+                            
+                        DeleteMapUnitTest(targetMapUnit[0], targetMapUnit[1]);
+                    }
+                }
+
                 IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
                 if (validMapUnitList.Count > 0)
                 {
-                    Console.WriteLine("Valid map unit list:");
+                    Log.Information("Valid map unit list:");
                     int weight = 0;
                     foreach (var abstractMapUnit in validMapUnitList)
                     {
-                        randomizer.Add(abstractMapUnit.MapUnitName, abstractMapUnit.Weight);
                         weight += abstractMapUnit.Weight;
-                        Console.WriteLine("  Name: " + abstractMapUnit.MapUnitName + ", Weight: "+ abstractMapUnit.Weight);
                     }
                     if (weight > 0)
                     {
-                        var result = randomizer.NextWithReplacement();
-                        SetMapUnit(targetMapUnit[0], targetMapUnit[1], result);
-                        Console.WriteLine("Choose {0} to place in [{1},{2}]", result, targetMapUnit[0], targetMapUnit[1]);
-                        Console.WriteLine("------------------------------");
+                        foreach (var abstractMapUnit in validMapUnitList)
+                        {
+                            randomizer.Add(abstractMapUnit.MapUnitName, abstractMapUnit.Weight);
+                            weight += abstractMapUnit.Weight;
+                            Log.Information("  Name: " + abstractMapUnit.MapUnitName + ", Weight: " + abstractMapUnit.Weight);
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("No valid map unit to place in [{0},{1}], because total weight is 0", targetMapUnit[0], targetMapUnit[1]);
-                        failureTimes++;
-                        Console.WriteLine("------------------------------");
-                        if (failureTimes >= Constants.FailureTimes)
+                        foreach (var abstractMapUnit in validMapUnitList)
                         {
-                            Console.WriteLine("No valid map unit to place!");
-                            return;
+                            randomizer.Add(abstractMapUnit.MapUnitName, 1);
+                            weight += abstractMapUnit.Weight;
+                            Log.Information("  Name: " + abstractMapUnit.MapUnitName + ", Weight: 1");
                         }
+                        Log.Warning("Weights are modified because all of them are 0");
                     }
+                    var result = randomizer.NextWithReplacement();
+                    SetMapUnit(targetMapUnit[0], targetMapUnit[1], result);
+                    Log.Information("Choose {0} to place in [{1},{2}]", result, targetMapUnit[0], targetMapUnit[1]);
+                    Log.Information("");
                 }
                 else
                 {
                     int[] previousLocation = PlacedAbstractMapUnitRecord.Last();
-                    var previousName = AbstractMapMatrix[previousLocation[0], previousLocation[1]].MapUnitName;
+                    var previousName = AbstractMapMemberMatrix[previousLocation[0], previousLocation[1]].MapUnitName;
                     var failure = new FailureAbstractMapUnitRecord();
                     int existFailureIndex = -1;
                     for (int i = 0; i < FailureAbsMapUnitRecordList.Count; i++)
@@ -522,7 +597,164 @@ namespace MapEditor
                     failureTimes++;
                     if (failureTimes >= Constants.FailureTimes)
                     {
-                        Console.WriteLine("No valid map unit to place!");
+                        Log.Error("No valid map unit to place!");
+                        return;
+                    }
+                }
+            }
+        }
+
+        public static int[] GetFirstEmptyMapMember()
+        {
+            for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
+            {
+                for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
+                {
+                    if (AbstractMapMemberMatrix[i, j].IsOnMap && AbstractMapMemberMatrix[i, j].MapUnitName == "empty")
+                        return new int[] { i, j };
+                }
+            }
+            return new int[] { 0, 0 };
+        }
+        public static void SetMapUnitByOrder()
+        {
+            bool notAllMapUnitsSet = true;
+            int failureTimes = 0;
+            while (notAllMapUnitsSet)
+            {
+                UpdateMapUnitInfo();
+                notAllMapUnitsSet = false;
+                foreach (var absMapMember in AbstractMapMemberMatrix)
+                {
+                    if (!(absMapMember.SEConnected
+                        && absMapMember.NWConnected
+                        && absMapMember.SWConnected
+                        && absMapMember.NEConnected))
+                    {
+                        notAllMapUnitsSet = true;
+                    }
+                }
+                int[] targetMapUnit = GetFirstEmptyMapMember();
+                if (targetMapUnit[0] == -1 && targetMapUnit[1] == -1)
+                {
+                    Log.Information("******************************************************");
+                    Log.Information("Successfully place all map units!");
+                    Log.Information("******************************************************");
+                    return;
+                }
+                //order : NE NW SW SE
+                var nearbyAbsMapMember = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1]);
+
+                var validMapUnitList = GetValidAbsMapUnitList(nearbyAbsMapMember);
+
+                var failureRecord = new FailureAbstractMapUnitRecord();
+                List<int> deleteUnitMap = new List<int>();
+                foreach (var record in FailureAbsMapUnitRecordList)
+                {
+                    if (record.IsTargetFailureRecord(targetMapUnit[0], targetMapUnit[1]))
+                        failureRecord = record;
+                }
+                for (int i = 0; i < validMapUnitList.Count; i++)
+                {
+                    if (failureRecord.IsInFailureRecord(validMapUnitList[i].MapUnitName))
+                        deleteUnitMap.Add(i);
+                }
+                for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
+                {
+                    foreach (int record in deleteUnitMap)
+                    {
+                        if (i == record)
+                            validMapUnitList.RemoveAt(i);
+                    }
+                }
+
+                //check after placing some MU, its nearby MUs have options or not.
+                var nearbyAbsMapMemberOfNE = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1] - 1);
+                var nearbyAbsMapMemberOfNW = GetNearbyAbstractMapMemberInfo(targetMapUnit[0] - 1, targetMapUnit[1]);
+                var nearbyAbsMapMemberOfSE = GetNearbyAbstractMapMemberInfo(targetMapUnit[0] + 1, targetMapUnit[1]);
+                var nearbyAbsMapMemberOfSW = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1] + 1);
+
+                if (validMapUnitList.Count > 0)
+                {
+                    for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
+                    {
+                        SetMapUnitTest(targetMapUnit[0], targetMapUnit[1], validMapUnitList[i].MapUnitName);
+                        var validMapUnitListOfNE = GetValidAbsMapUnitList(nearbyAbsMapMemberOfNE);
+                        if (validMapUnitListOfNE.Count < 1)
+                        {
+                            Log.Warning(validMapUnitList[i].MapUnitName + " is removed because it will cause further struggle");
+                            validMapUnitList.RemoveAt(i);
+                        }
+
+                        DeleteMapUnitTest(targetMapUnit[0], targetMapUnit[1]);
+                    }
+                }
+
+                IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
+                if (validMapUnitList.Count > 0)
+                {
+                    Log.Information("Valid map unit list:");
+                    int weight = 0;
+                    foreach (var abstractMapUnit in validMapUnitList)
+                    {
+                        weight += abstractMapUnit.Weight;
+                    }
+                    if (weight > 0)
+                    {
+                        foreach (var abstractMapUnit in validMapUnitList)
+                        {
+                            randomizer.Add(abstractMapUnit.MapUnitName, abstractMapUnit.Weight);
+                            weight += abstractMapUnit.Weight;
+                            Log.Information("  Name: " + abstractMapUnit.MapUnitName + ", Weight: " + abstractMapUnit.Weight);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var abstractMapUnit in validMapUnitList)
+                        {
+                            randomizer.Add(abstractMapUnit.MapUnitName, 1);
+                            weight += abstractMapUnit.Weight;
+                            Log.Information("  Name: " + abstractMapUnit.MapUnitName + ", Weight: 1");
+                        }
+                        Log.Warning("Weights are modified because all of them are 0");
+                    }
+                    var result = randomizer.NextWithReplacement();
+                    SetMapUnit(targetMapUnit[0], targetMapUnit[1], result);
+                    Log.Information("Choose {0} to place in [{1},{2}]", result, targetMapUnit[0], targetMapUnit[1]);
+                    Log.Information("");
+                }
+                else
+                {
+                    int[] previousLocation = PlacedAbstractMapUnitRecord.Last();
+                    var previousName = AbstractMapMemberMatrix[previousLocation[0], previousLocation[1]].MapUnitName;
+                    var failure = new FailureAbstractMapUnitRecord();
+                    int existFailureIndex = -1;
+                    for (int i = 0; i < FailureAbsMapUnitRecordList.Count; i++)
+                    {
+                        if (FailureAbsMapUnitRecordList[i].IsTargetFailureRecord(previousLocation[0], previousLocation[1]))
+                            existFailureIndex = i;
+                    }
+                    if (existFailureIndex > -1)
+                    {
+                        FailureAbsMapUnitRecordList[existFailureIndex].AddFailureRecord(previousLocation[0], previousLocation[1], previousName);
+                    }
+                    else
+                    {
+                        failure.AddFailureRecord(previousLocation[0], previousLocation[1], previousName);
+                        FailureAbsMapUnitRecordList.Add(failure);
+                    }
+                    foreach (var failureRec in FailureAbsMapUnitRecordList)
+                    {
+                        if (failureRec.IsTargetFailureRecord(targetMapUnit[0], targetMapUnit[1]))
+                            failureRec.Name.Clear();
+                    }
+                    DeleteMapUnit(previousLocation[0], previousLocation[1]);
+
+
+                    failureTimes++;
+                    if (failureTimes >= Constants.FailureTimes)
+                    {
+                        Log.Error("No valid map unit to place!");
                         return;
                     }
                 }
@@ -531,15 +763,15 @@ namespace MapEditor
         public static void FillRemainingEmptyUnitMap()
         {
             UpdateMapUnitInfo();
-            Console.WriteLine("------------------------------");
-            Console.WriteLine("Strat filling remaining empty unit map");
-            Console.WriteLine("------------------------------");
+            Log.Information("******************************************************");
+            Log.Information("Strat filling remaining empty unit map");
+            Log.Information("******************************************************");
             int count = 0;
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
-                    var unitMap = AbstractMapMatrix[i, j];
+                    var unitMap = AbstractMapMemberMatrix[i, j];
                     if (unitMap.MapUnitName == "empty" && unitMap.IsOnMap && !unitMap.Placed)
                     {
                         var nearbyAbsMapMember = GetNearbyAbstractMapMemberInfo(i,j);
@@ -547,42 +779,51 @@ namespace MapEditor
                         IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
                         if (validMapUnitList.Count > 0)
                         {
-                            Console.WriteLine("Valid map unit list:");
+                            Log.Information("Valid map unit list:");
                             int weight = 0;
                             foreach (var abstractMapUnit in validMapUnitList)
                             {
-                                randomizer.Add(abstractMapUnit.MapUnitName, abstractMapUnit.Weight);
                                 weight += abstractMapUnit.Weight;
-                                Console.WriteLine("  Name: " + abstractMapUnit.MapUnitName + ", Weight: " + abstractMapUnit.Weight);
                             }
                             if (weight > 0)
                             {
-                                var result = randomizer.NextWithReplacement();
-                                SetMapUnit(i, j, result);
-                                count++;
-                                Console.WriteLine("Choose {0} to place in [{1},{2}]", result, i,j);
-                                Console.WriteLine("------------------------------");
+                                foreach (var abstractMapUnit in validMapUnitList)
+                                {
+                                    randomizer.Add(abstractMapUnit.MapUnitName, abstractMapUnit.Weight);
+                                    weight += abstractMapUnit.Weight;
+                                    Log.Information("  Name: " + abstractMapUnit.MapUnitName + ", Weight: " + abstractMapUnit.Weight);
+                                }
                             }
                             else
                             {
-                                Console.WriteLine("No valid map unit to place in [{0},{1}], because total weight is 0", i,j);
-                                Console.WriteLine("------------------------------");
+                                foreach (var abstractMapUnit in validMapUnitList)
+                                {
+                                    randomizer.Add(abstractMapUnit.MapUnitName, 1);
+                                    weight += abstractMapUnit.Weight;
+                                    Log.Information("  Name: " + abstractMapUnit.MapUnitName + ", Weight: 1");
+                                    Log.Information("Weights are modified because all of them are 0");
+                                }
                             }
+                            var result = randomizer.NextWithReplacement();
+                            SetMapUnit(i, j, result);
+                            count++;
+                            Log.Information("Choose {0} to place in [{1},{2}]", result, i,j);
+                            Log.Information("");
                         }
                         else
                         {
-                            Console.WriteLine("Failed to fill empty unit map in [{0},{1}]", i, j);
-                            Console.WriteLine("------------------------------");
+                            Log.Error("Failed to fill empty unit map in [{0},{1}]", i, j);
+                            Log.Information("");
                         }
                     }
                 }
             }
-            Console.WriteLine("End of filling remaining empty unit map");
-            Console.WriteLine("Counts: {0}",count);
-            Console.WriteLine("------------------------------");
+            Log.Information("End of filling remaining empty unit map");
+            Log.Information("Counts: {0}",count);
+            Log.Information("******************************************************");
         }
 
-        public static List<AbstractMapUnit> GetValidAbsMapUnitList(AbstractMap[] nearbyUnitMap)
+        public static List<AbstractMapUnit> GetValidAbsMapUnitList(AbstractMapMember[] nearbyUnitMap)
         {
             var validMapUnitList = new List<AbstractMapUnit>();
 
@@ -644,9 +885,17 @@ namespace MapEditor
                     validMapUnitList.Add(AbstractMapUnitList[i]);
             }
 
+            int validCount = 0;
+            foreach (var mapUnit in validMapUnitList)
+            {
+                if (mapUnit.Weight > 0)
+                    validCount++;
+            }
+            //remove the same Map Unit with nearby
             for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
             {
-                if (validMapUnitList.Count > 1)
+
+                if (validCount > 1)
                 {
                     var name = validMapUnitList[i].MapUnitName;
                     if (nearbyUnitMap[0] != null)
@@ -691,13 +940,13 @@ namespace MapEditor
             UpdateMapUnitInfo();
             int[] lowestEntropyMU = { -1, -1 };
             int lowestEntropy = int.MaxValue;
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
-                    if (AbstractMapMatrix[i, j].Entropy < lowestEntropy && AbstractMapMatrix[i, j].MapUnitName == "empty" && AbstractMapMatrix[i, j].IsOnMap)
+                    if (AbstractMapMemberMatrix[i, j].Entropy < lowestEntropy && AbstractMapMemberMatrix[i, j].MapUnitName == "empty" && AbstractMapMemberMatrix[i, j].IsOnMap)
                     {
-                        lowestEntropy = AbstractMapMatrix[i, j].Entropy;
+                        lowestEntropy = AbstractMapMemberMatrix[i, j].Entropy;
                         lowestEntropyMU[0] = i;
                         lowestEntropyMU[1] = j;
                     }
@@ -708,77 +957,153 @@ namespace MapEditor
 
         public static void UpdateMapUnitInfo()
         {
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
-                    AbstractMapMatrix[i, j].Entropy = 50;
+                    AbstractMapMemberMatrix[i, j].Entropy = 50;
                     if (IsValidAUM(i, j - 1))
                     {
-                        if (AbstractMapMatrix[i, j - 1].MapUnitName != "empty")
+                        if (AbstractMapMemberMatrix[i, j - 1].MapUnitName != "empty")
                         {
-                            AbstractMapMatrix[i, j].NEConnected = true;
-                            AbstractMapMatrix[i, j].Entropy -= 10;
+                            AbstractMapMemberMatrix[i, j].NEConnected = true;
+                            AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
                     if (IsValidAUM(i, j + 1))
                     {
-                        if (AbstractMapMatrix[i, j + 1].MapUnitName != "empty")
+                        if (AbstractMapMemberMatrix[i, j + 1].MapUnitName != "empty")
                         {
-                            AbstractMapMatrix[i, j].SWConnected = true;
-                            AbstractMapMatrix[i, j].Entropy -= 10;
+                            AbstractMapMemberMatrix[i, j].SWConnected = true;
+                            AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
                     if (IsValidAUM(i - 1, j))
                     {
-                        if (AbstractMapMatrix[i - 1, j].MapUnitName != "empty")
+                        if (AbstractMapMemberMatrix[i - 1, j].MapUnitName != "empty")
                         {
-                            AbstractMapMatrix[i, j].NWConnected = true;
-                            AbstractMapMatrix[i, j].Entropy -= 10;
+                            AbstractMapMemberMatrix[i, j].NWConnected = true;
+                            AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
                     if (IsValidAUM(i + 1, j))
                     {
-                        if (AbstractMapMatrix[i + 1, j].MapUnitName != "empty")
+                        if (AbstractMapMemberMatrix[i + 1, j].MapUnitName != "empty")
                         {
-                            AbstractMapMatrix[i, j].SEConnected = true;
-                            AbstractMapMatrix[i, j].Entropy -= 10;
+                            AbstractMapMemberMatrix[i, j].SEConnected = true;
+                            AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
-                    if (!(AbstractMapMatrix[i, j].SEConnected 
-                        && AbstractMapMatrix[i, j].NWConnected 
-                        && AbstractMapMatrix[i, j].SWConnected 
-                        && AbstractMapMatrix[i, j].NEConnected))
+                    if (!(AbstractMapMemberMatrix[i, j].SEConnected 
+                        && AbstractMapMemberMatrix[i, j].NWConnected 
+                        && AbstractMapMemberMatrix[i, j].SWConnected 
+                        && AbstractMapMemberMatrix[i, j].NEConnected))
                     {
-                        if (AbstractMapMatrix[i, j].SEConnected)
-                            AbstractMapMatrix[i, j].Entropy -= 2;
-                        if (AbstractMapMatrix[i, j].NWConnected)
-                            AbstractMapMatrix[i, j].Entropy -= 2;
-                        if (AbstractMapMatrix[i, j].SWConnected)
-                            AbstractMapMatrix[i, j].Entropy -= 2;
-                        if (AbstractMapMatrix[i, j].NEConnected)
-                            AbstractMapMatrix[i, j].Entropy -= 2;
+                        if (AbstractMapMemberMatrix[i, j].SEConnected)
+                            AbstractMapMemberMatrix[i, j].Entropy -= 2;
+                        if (AbstractMapMemberMatrix[i, j].NWConnected)
+                            AbstractMapMemberMatrix[i, j].Entropy -= 2;
+                        if (AbstractMapMemberMatrix[i, j].SWConnected)
+                            AbstractMapMemberMatrix[i, j].Entropy -= 2;
+                        if (AbstractMapMemberMatrix[i, j].NEConnected)
+                            AbstractMapMemberMatrix[i, j].Entropy -= 2;
                     }
                     else
-                        AbstractMapMatrix[i, j].Entropy = 50;
+                        AbstractMapMemberMatrix[i, j].Entropy = 50;
                 }
             }
         }
-        public static void RandomSetMapUnit()
+        
+        public static int[] GetCentralAbsMapMemberLocation()
         {
-            IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
-            foreach (var abstractMapUnit in AbstractMapUnitList)
+            int range = Width + Height;
+            int[] location = { (int)Math.Ceiling((float)range / 2.0 / (float)Constants.SideLength), (int)Math.Ceiling((float)range / 2.0 / (float)Constants.SideLength) };
+            return location;
+        }
+
+        //make sure a group of Abs Map Units have enough place to place in four corners
+        public static int[] GetEnoughPlaceAbsMapMemberLocation(string direction, int length)
+        {
+            int[] result = new int[2] { 1, 1 };
+            if (direction == "NW")
             {
-                randomizer.Add(abstractMapUnit.MapUnitName, 1);
-            }
-            for (int i = 0; i < AbstractMapMatrix.GetLength(0); i++)
-            {
-                for (int j = 0; j < AbstractMapMatrix.GetLength(1); j++)
+
+                for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
                 {
-                    AbstractMapMatrix[i, j].MapUnitName = randomizer.NextWithReplacement();
+                    for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
+                    {
+                        if (IsValidAUM(i, j) && IsValidAUM(i, j + length - 1))
+                        {
+                            if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j + length - 1].IsAllOnVisibleMap)
+                            {
+                                result[0] = i;
+                                result[1] = j;
+                                return result;
+                            }
+                        }
+                    }
                 }
             }
+            if (direction == "NE")
+            {
+
+                for (int i = 0; i < AbstractMapMemberMatrix.GetLength(1); i++)
+                {
+                    for (int j = 0; j < AbstractMapMemberMatrix.GetLength(0); j++)
+                    {
+                        if (IsValidAUM(j, i) && IsValidAUM(j + length - 1, i))
+                        {
+                            if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j + length - 1, i].IsAllOnVisibleMap)
+                            {
+                                result[0] = j;
+                                result[1] = i;
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            if (direction == "SW")
+            {
+
+                for (int i = AbstractMapMemberMatrix.GetLength(1) - 1 ; i >= 0; i--)
+                {
+                    for (int j = AbstractMapMemberMatrix.GetLength(0) - 1; j >= 0 ; j--)
+                    {
+                        if (IsValidAUM(j, i) && IsValidAUM(j + length - 1, i))
+                        {
+                            if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j + length - 1, i].IsAllOnVisibleMap)
+                            {
+                                result[0] = j;
+                                result[1] = i;
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            if (direction == "SE")
+            {
+
+                for (int i = AbstractMapMemberMatrix.GetLength(0) - 1; i >= 0; i--)
+                {
+                    for (int j = AbstractMapMemberMatrix.GetLength(1) - 1; j >= 0; j--)
+                    {
+                        if (IsValidAUM(i, j) && IsValidAUM(i, j + length - 1))
+                        {
+                            if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j + length - 1].IsAllOnVisibleMap)
+                            {
+                                result[0] = i;
+                                result[1] = j;
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
         }
+
         public static List<IsoTile> CreateTileList()
         {
             var tileList = new List<IsoTile>();
@@ -880,6 +1205,74 @@ namespace MapEditor
                 index++;
             }
             return waypointIniSection;
+        }
+        public static void PlacePlayerLocation(int number, string direction)
+        {
+            List<string> startingUnits = new List<string>();
+            foreach (var absMU in AbstractMapUnitList)
+            {
+                if (absMU.MapUnitName.Contains("spawn"))
+                {
+                    startingUnits.Add(absMU.MapUnitName);
+                }
+            }
+            int[] playerLocation = new int[2];
+            if (direction == "NW")
+                playerLocation = GetEnoughPlaceAbsMapMemberLocation("NW", number);
+            if (direction == "SW")
+                playerLocation = GetEnoughPlaceAbsMapMemberLocation("SW", number);
+            if (direction == "SE")
+                playerLocation = GetEnoughPlaceAbsMapMemberLocation("SE", number);
+            if (direction == "NE")
+                playerLocation = GetEnoughPlaceAbsMapMemberLocation("NE", number);
+
+            if (direction == "NW" || direction == "SE")
+            {
+                for (int i = 0; i < number; i++)
+                {
+                    RandomSetMapUnit(playerLocation[0], playerLocation[1] + i, startingUnits);
+                    Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1] + i);
+                }
+            }
+            else if (direction == "SW" || direction == "NE")
+            {
+                for (int i = 0; i < number; i++)
+                {
+                    RandomSetMapUnit(playerLocation[0] + i, playerLocation[1], startingUnits);
+                    Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + i, playerLocation[1]);
+                }
+            }
+        }
+
+        public static void IncreaseWeightContainsX(int type, int times = 1)
+        {
+            type -= 1;
+            for (int j = 0; j < times; j ++)
+            {
+                for (int i = 0; i < AbstractMapUnitList.Count; i++)
+                {
+                    var absMU = AbstractMapUnitList[i];
+                    if (absMU.Weight != 0)
+                    {
+                        if (absMU.NEConnectionType == type)
+                        {
+                            AbstractMapUnitList[i].Weight += 1;
+                        }
+                        if (absMU.NWConnectionType == type)
+                        {
+                            AbstractMapUnitList[i].Weight += 1;
+                        }
+                        if (absMU.SEConnectionType == type)
+                        {
+                            AbstractMapUnitList[i].Weight += 1;
+                        }
+                        if (absMU.SWConnectionType == type)
+                        {
+                            AbstractMapUnitList[i].Weight += 1;
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -17,15 +17,18 @@ namespace MapEditor
         public static string BitMapPath = WorkFolder + BitMapName;
         public static string TemplateMapName = "templateMap.map";
         public static string TemplateMapPath = WorkFolder + TemplateMapName;
-        public static string TEMPERATEPath = WorkFolder + @"TileInfo\TEMPERATE";
-        public static string SNOWPath = WorkFolder + @"TileInfo\SNOW";
-        public static string URBANPath = WorkFolder + @"TileInfo\URBAN";
-        public static string NEWURBANPath = WorkFolder + @"TileInfo\NEWURBAN";
-        public static string LUNARPath = WorkFolder + @"TileInfo\LUNAR";
-        public static string DESERTPath = WorkFolder + @"TileInfo\DESERT";
+        public static string TEMPERATEPath = WorkFolder + @"TileInfo\TEMPERATE\";
+        public static string SNOWPath = WorkFolder + @"TileInfo\SNOW\";
+        public static string URBANPath = WorkFolder + @"TileInfo\URBAN\";
+        public static string NEWURBANPath = WorkFolder + @"TileInfo\NEWURBAN\";
+        public static string LUNARPath = WorkFolder + @"TileInfo\LUNAR\";
+        public static string DESERTPath = WorkFolder + @"TileInfo\DESERT\";
 
         public static int FailureTimes = 10000;
         public static string RenderPath = WorkFolder + @"Map Renderer\CNCMaps.Renderer.exe";
         public static string GamePath = @"D:\Games\YURI\Red Alert 2";
+
+        public static int SideLength = 25;//15;
+        public static int StartingXY = 18;//13;
     }
 }

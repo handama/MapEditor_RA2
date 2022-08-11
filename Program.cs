@@ -1,4 +1,5 @@
 ﻿using MapEditor.TileInfo;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +15,12 @@ namespace MapEditor
             { 
                 var mapFile = new MapFile();
 
-                WorkingMap.Initialize(200, 200, Theater.TEMPERATE);
+                WorkingMap.Initialize(200, 200, Theater.NEWURBAN);
                 int range = WorkingMap.Width + WorkingMap.Height;
 
                 //AbstractMap.SetMapUnit(6, 6, "011");
-                WorkingMap.SetMapUnitByEntropy();
+                //WorkingMap.SetMapUnitByEntropy();
+                WorkingMap.SetMapUnitByOrder();
                 WorkingMap.FillRemainingEmptyUnitMap();
                 WorkingMap.PlaceMapUnitByAbsMapMatrix();
 
@@ -34,14 +36,17 @@ namespace MapEditor
                 mapFile.Aircraft = WorkingMap.CreateAircraftINI();
                 mapFile.Smudge = WorkingMap.CreateSmudgeINI();
                 mapFile.Waypoint = WorkingMap.CreateWaypointINI();
+                mapFile.AddComment(Constants.FilePath);
                 mapFile.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
             }
 
-            Console.WriteLine("press any key to exist...");
-            Console.ReadKey();
         }
         static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration().WriteTo.File(Constants.WorkFolder+"log\\"+"log-.txt", rollingInterval: RollingInterval.Minute).CreateLogger();
+            Log.Information("******************************************************");
+            Log.Information("*******************Creating New Map*******************");
+            Log.Information("******************************************************");
             /*
                         for (int i = 0; i < 10; i++)
                         {
@@ -59,18 +64,24 @@ namespace MapEditor
                             _instance.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
                         }*/
 
-            /*            var _instance = new Program();
-                        _instance.CreateRandomMap(10);*/
+/*            var _instance = new Program();
+            _instance.CreateRandomMap(10);*/
 
 
 
             var mapFile = new MapFile();
 
-            WorkingMap.Initialize(200, 200, Theater.TEMPERATE);
+            WorkingMap.Initialize(200, 200, Theater.NEWURBAN);
             int range = WorkingMap.Width + WorkingMap.Height;
 
-            //AbstractMap.SetMapUnit(6, 6, "011");
-            WorkingMap.SetMapUnitByEntropy();
+            WorkingMap.PlacePlayerLocation(2, "NW");
+            WorkingMap.PlacePlayerLocation(2, "SW");
+            WorkingMap.PlacePlayerLocation(2, "NE");
+            WorkingMap.PlacePlayerLocation(2, "SE");
+
+            //WorkingMap.IncreaseWeightContainsX(6);
+            //WorkingMap.SetMapUnitByEntropy();
+            WorkingMap.SetMapUnitByOrder();
             WorkingMap.FillRemainingEmptyUnitMap();
             WorkingMap.PlaceMapUnitByAbsMapMatrix();
 
@@ -87,10 +98,9 @@ namespace MapEditor
             mapFile.Smudge = WorkingMap.CreateSmudgeINI();
             mapFile.Waypoint = WorkingMap.CreateWaypointINI();
             mapFile.SaveFullMap(Constants.FilePath);
+            mapFile.AddComment(Constants.FilePath);
             //mapFile.RenderMap(Constants.FilePath);
 
-            Console.WriteLine("press any key to exist...");
-            Console.ReadKey();
 
 
 
@@ -114,6 +124,8 @@ namespace MapEditor
             //bit2yrm
             //_instance.CreateMapbyBitMap(Constants.BitMapPath);
             //_instance.SaveFullMap(Constants.FilePath);
+
+            Log.CloseAndFlush();
         }
     }
 }

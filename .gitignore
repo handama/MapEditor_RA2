@@ -1,6 +1,8 @@
 bin
 obj
 debug
+log
 .vs
 mapPack.txt
 IsoMapPack5.txt
+log-*.txt

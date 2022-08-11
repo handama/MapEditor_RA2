@@ -24,11 +24,17 @@ namespace MapEditor.TileInfo
             else
                 return false;
         }
+        //units with the same connection type
         public bool IsInFailureRecord(string name)
         {
-            foreach(var n in Name)
+            var targetMU = WorkingMap.GetAbstractMapUnitByName(name);
+            foreach (var n in Name)
             {
-                if (n == name)
+                var thisMU = WorkingMap.GetAbstractMapUnitByName(n);
+                if (targetMU.NEConnectionType == thisMU.NEConnectionType 
+                    && targetMU.SEConnectionType == thisMU.SEConnectionType 
+                    && targetMU.NWConnectionType == thisMU.NWConnectionType 
+                    && targetMU.SWConnectionType == thisMU.SWConnectionType)
                     return true;
             }
             return false;

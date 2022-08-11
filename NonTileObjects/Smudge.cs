@@ -20,8 +20,8 @@ namespace MapEditor.NonTileObjects
             if (values.Count() == 4)
             {
                 Name = values[0];
-                RelativeX = int.Parse(values[1]) - 13;
-                RelativeY = int.Parse(values[2]) - 13;
+                RelativeX = int.Parse(values[1]) - Constants.StartingXY;
+                RelativeY = int.Parse(values[2]) - Constants.StartingXY;
                 unknown = int.Parse(values[3]);
             }
         }

@@ -6,8 +6,9 @@
     <OutputType>Exe</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>ConsoleApplication</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -20,6 +21,7 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -30,6 +32,7 @@
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace>MapEditor</RootNamespace>
@@ -38,6 +41,12 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Rampastring.Tools">
       <HintPath>references\Rampastring.Tools.dll</HintPath>
+    </Reference>
+    <Reference Include="Serilog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
+      <HintPath>packages\Serilog.2.11.0\lib\net45\Serilog.dll</HintPath>
+    </Reference>
+    <Reference Include="Serilog.Sinks.File, Version=5.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
+      <HintPath>packages\Serilog.Sinks.File.5.0.0\lib\net45\Serilog.Sinks.File.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -86,6 +95,7 @@
     <None Include=".vs\ProjectSettings.json" />
     <None Include=".vs\slnx.sqlite" />
     <None Include=".vs\VSWorkspaceState.json" />
+    <None Include="app.config" />
     <None Include="IsoMapPack5.section" />
     <None Include="mfs.size" />
     <None Include="packages.config" />
@@ -102,7 +112,7 @@
     <Compile Include="NonTileObjects\Terrain.cs" />
     <Compile Include="NonTileObjects\Waypoint.cs" />
     <Compile Include="WorkingMap.cs" />
-    <Compile Include="AbstractMap.cs" />
+    <Compile Include="AbstractMapMember.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="NonTileObjects\Unit.cs" />
     <Compile Include="TileInfo\AbstractMapUnit.cs" />

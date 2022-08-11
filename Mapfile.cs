@@ -10,6 +10,7 @@ using Rampastring.Tools;
 using MapEditor.TileInfo;
 using System.Linq.Expressions;
 using System.Diagnostics;
+using Serilog;
 
 namespace MapEditor
 {
@@ -48,18 +49,18 @@ namespace MapEditor
             IsoTile[,] Tiles = new IsoTile[Width * 2 - 1, Height];//这里值得注意
             byte[] lzoData = Convert.FromBase64String(IsoMapPack5String);
 
-            //Console.WriteLine(cells);
+            //Log.Information(cells);
             int lzoPackSize = cells * 11 + 4;
             var isoMapPack = new byte[lzoPackSize];
             uint totalDecompressSize = Format5.DecodeInto(lzoData, isoMapPack);//TODO 源，目标 输入应该是解码后长度，isoMapPack被赋值解码值了
                                                                                //uint	0 to 4,294,967,295	Unsigned 32-bit integer	System.UInt32
             var mf = new MemoryFile(isoMapPack);
 
-            //Console.WriteLine(BitConverter.ToString(lzoData));
+            //Log.Information(BitConverter.ToString(lzoData));
             int count = 0;
             //List<List<IsoTile>> TilesList = new List<List<IsoTile>>(Width * 2 - 1);
             IsoTileList = new List<IsoTile>();
-            //Console.WriteLine(TilesList.Capacity);
+            //Log.Information(TilesList.Capacity);
             for (int i = 0; i < cells; i++)
             {
                 ushort rx = mf.ReadUInt16();//ushort	0 to 65,535	Unsigned 16-bit integer	System.UInt16
@@ -74,7 +75,7 @@ namespace MapEditor
                 int dx = rx - ry + Width - 1;
 
                 int dy = rx + ry - Width - 1;
-                //Console.WriteLine("{1}", rx, ry, tilenum, subtile, z, dx, dy,count);
+                //Log.Information("{1}", rx, ry, tilenum, subtile, z, dx, dy,count);
                 //上面是一个线性变换 旋转45度、拉长、平移
                 if (dx >= 0 && dx < 2 * Width &&
                     dy >= 0 && dy < 2 * Height)
@@ -256,6 +257,10 @@ namespace MapEditor
             fullMap.WriteIniFile(path);
             SaveIsoMapPack5(path);
             SaveOverlay(path);
+            Log.Information("******************************************************");
+            Log.Information("Successfully create random map:");
+            Log.Information(path);
+            Log.Information("******************************************************");
         }
         public void LoadWorkingMapPack(string path)
         {
@@ -338,6 +343,12 @@ namespace MapEditor
                 }
             }
             return OverlayList;
+        }
+        public void AddComment(string path)
+        {
+            var saveFile = new IniFile(path);
+            saveFile.Comment = "This map is created by HFX's Random map creator.\n; Visit https://github.com/handama/MapEditor_RA2 to get the latest version.";
+            saveFile.WriteIniFile();
         }
 
         public void SaveOverlay(string path)
@@ -423,16 +434,16 @@ namespace MapEditor
 
         public void RenderMap(string path)
         {
-            Console.WriteLine("------------------------------");
-            Console.WriteLine("Rendering Map...");
+            Log.Information("******************************************************");
+            Log.Information("Rendering Map...");
             Process MapRenderer = new Process();
             var outputName = path.Split('\\').Last().Split('.')[0];
             MapRenderer.StartInfo.FileName = Constants.RenderPath;
             MapRenderer.StartInfo.Arguments ="-i \"" + path + "\" -j -q 70 -o \"" + outputName + "\" -m \"" + Constants.GamePath + "\" -r";
             MapRenderer.Start();
             while (!MapRenderer.HasExited) { }
-            Console.WriteLine("Image is saved as " + outputName + ".jpg");
-            Console.WriteLine("------------------------------");
+            Log.Information("Image is saved as " + outputName + ".jpg");
+            Log.Information("******************************************************");
         }
     }
 }
