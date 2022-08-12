@@ -11,6 +11,7 @@ using MapEditor.TileInfo;
 using System.Linq.Expressions;
 using System.Diagnostics;
 using Serilog;
+using System.Globalization;
 
 namespace MapEditor
 {
@@ -244,7 +245,7 @@ namespace MapEditor
         public void SaveFullMap(string path)
         {
             var fullMap = new IniFile(Constants.TemplateMapPath);
-            fullMap.SetStringValue("Map", "Size", "0,0,"+ Width.ToString() + "," + Height.ToString());
+            fullMap.SetStringValue("Map", "Size", "0,0," + Width.ToString() + "," + Height.ToString());
             fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
             fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
             fullMap.AddSection(Unit);
@@ -327,7 +328,7 @@ namespace MapEditor
             format80Data = Convert.FromBase64String(OverlayDataPackString);
             var overlayDataPack = new byte[1 << 18];
             Format5.DecodeInto(format80Data, overlayDataPack, 80);
-            
+
             foreach (var tile in IsoTileList)
             {
                 if (tile == null) continue;
@@ -365,7 +366,7 @@ namespace MapEditor
                 int index = overlay.Tile.Rx + 512 * overlay.Tile.Ry;
                 overlayPack[index] = overlay.OverlayID;
                 overlayDataPack[index] = overlay.OverlayValue;
-                
+
             }
 
             var compressedPack = Format5.Encode(overlayPack, 80);
@@ -432,17 +433,139 @@ namespace MapEditor
             overlayPack.WriteIniFile();
         }
 
-        public void RenderMap(string path)
+        public void CalculateStartingWaypoints(string filePath)
+        {
+            var MapFile = new IniFile(filePath);
+
+            var LocalSize = MapFile.GetStringValue("Map", "LocalSize", "0,0,0,0");
+            var LocalWidth = int.Parse(LocalSize.Split(',')[2]);
+            var LocalHeight = int.Parse(LocalSize.Split(',')[3]);
+            MapFile.SetStringValue("Header", "Width", (LocalWidth - 1).ToString());
+            MapFile.SetStringValue("Header", "Height", LocalHeight.ToString());
+
+            int playerNum = 0;
+            while (MapFile.KeyExists("Waypoints", playerNum.ToString()) && playerNum < 8)
+            {
+                var waypoint = MapFile.GetStringValue("Waypoints", playerNum.ToString(), "000000");
+                int length = waypoint.Length;
+                int x = int.Parse(waypoint.Substring(length - 3, 3));
+                int y = int.Parse(waypoint.Substring(0, length - 3));
+                float former = (x - y - 1 + Width)/2;
+                float later = y + former - Width;
+                var wpstring = ((int)(256 - Width / 2 + former)).ToString() + "," + ((int)(Width / 2 + later)).ToString();
+                MapFile.SetStringValue("Header", "Waypoint" + (playerNum + 1).ToString(), wpstring);
+
+                playerNum++;
+            }
+            MapFile.SetStringValue("Header", "NumberStartingPoints", playerNum.ToString());
+            MapFile.WriteIniFile();
+        }
+        public void CorrectPreviewSize(string filePath)
+        {
+            var MapFile = new IniFile(filePath);
+            var LocalSize = MapFile.GetStringValue("Map", "LocalSize", "0,0,0,0");
+            var LocalWidth = int.Parse(LocalSize.Split(',')[2]);
+            var LocalHeight = int.Parse(LocalSize.Split(',')[3]);
+            MapFile.SetStringValue("Preview", "Size", "0,0," + (int)(LocalWidth * 1.975) + "," + LocalHeight);
+            MapFile.WriteIniFile();
+        }
+
+        public void RandomSetLighting(string filePath)
+        {
+            var MapFile = new IniFile(filePath);
+            var lighting = MapFile.GetSection("Lighting");
+            var r = new Random();
+            double ambient = (double)r.Next(7000,10600) / 10000.0;
+            if (r.Next(1, 1000) > 380)
+                ambient = (double)r.Next(8500, 10600) / 10000.0;
+            double level = (double)r.Next(120, 320) / 10000.0;
+            double red = (double)r.Next(9001, 10601) / 10000.0;
+            double green = (double)r.Next(8900, 10100) / 10000.0;
+            double blue = (double)r.Next(9002, 10602) / 10000.0;
+
+            double wambient = (double)r.Next(3000, 6000) / 10000.0;
+            double wlevel = (double)r.Next(120, 320) / 10000.0;
+            double wred = (double)r.Next(7000, 8500) / 10000.0;
+            double wgreen = (double)r.Next(7500, 8800) / 10000.0;
+            double wblue = (double)r.Next(9800, 12000) / 10000.0;
+
+            lighting.SetStringValue("Ambient", String.Format("{0:0.000000}", ambient));
+            lighting.SetStringValue("Level", String.Format("{0:0.000000}", level));
+            lighting.SetStringValue("Red", String.Format("{0:0.000000}", red));
+            lighting.SetStringValue("Green", String.Format("{0:0.000000}", green));
+            lighting.SetStringValue("Blue", String.Format("{0:0.000000}", blue));
+
+            lighting.SetStringValue("IonAmbient", String.Format("{0:0.000000}", wambient));
+            lighting.SetStringValue("IonLevel", String.Format("{0:0.000000}", wlevel));
+            lighting.SetStringValue("IonRed", String.Format("{0:0.000000}", wred));
+            lighting.SetStringValue("IonGreen", String.Format("{0:0.000000}", wgreen));
+            lighting.SetStringValue("IonBlue", String.Format("{0:0.000000}", wblue));
+
+            MapFile.WriteIniFile();
+        }
+
+        /*unsafe public void GenerateMapPreview(Bitmap preview, string filePath)
+        {
+            var MapFile = new IniFile(filePath);
+            var LocalSize = MapFile.GetStringValue("Map", "LocalSize", "0,0,0,0");
+            var LocalWidth = int.Parse(LocalSize.Split(',')[2]);
+            var LocalHeight = int.Parse(LocalSize.Split(',')[3]);
+
+            BitmapData bmd = preview.LockBits(new Rectangle(0, 0, preview.Width, preview.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+            byte[] image = new byte[preview.Width * preview.Height * 3];
+            int idx = 0;
+
+            // invert rgb->bgr
+            for (int y = 0; y < bmd.Height; y++)
+            {
+                byte* p = (byte*)bmd.Scan0 + bmd.Stride * y;
+                for (int x = 0; x < bmd.Width; x++)
+                {
+                    byte r = *p++;
+                    byte g = *p++;
+                    byte b = *p++;
+
+                    image[idx++] = b;
+                    image[idx++] = g;
+                    image[idx++] = r;
+                }
+            }
+
+            // encode
+            byte[] image_compressed = Format5.Encode(image, 5);
+
+            // base64 encode
+            string image_base64 = Convert.ToBase64String(image_compressed, Base64FormattingOptions.None);
+
+            // now overwrite [Preview] and [PreviewPack], inserting them directly after [Basic] if not yet existing
+           
+            
+            if (MapFile.SectionExists("PreviewPack"))
+                MapFile.RemoveSection("PreviewPack");
+            MapFile.AddSection("PreviewPack");
+            
+            int rowNum = 1;
+            for (int i = 0; i < image_base64.Length; i += 70)
+            {
+                MapFile.SetStringValue("PreviewPack",rowNum++.ToString(), image_base64.Substring(i, Math.Min(70, image_base64.Length - i)));
+            }
+
+            MapFile.WriteIniFile();
+        }*/
+    
+        public void RenderMapAndGeneratePreview(string path)
         {
             Log.Information("******************************************************");
             Log.Information("Rendering Map...");
             Process MapRenderer = new Process();
             var outputName = path.Split('\\').Last().Split('.')[0];
             MapRenderer.StartInfo.FileName = Constants.RenderPath;
-            MapRenderer.StartInfo.Arguments ="-i \"" + path + "\" -j -q 70 -o \"" + outputName + "\" -m \"" + Constants.GamePath + "\" -r";
+            MapRenderer.StartInfo.UseShellExecute = false;
+            MapRenderer.StartInfo.CreateNoWindow = true;
+            MapRenderer.StartInfo.Arguments ="-i \"" + path + "\" -p -o \"" + outputName + "\" -m \"" + Constants.GamePath + "\" -r -z +(1000,0) --mark-start-pos -s  --preview-markers-selected";
             MapRenderer.Start();
             while (!MapRenderer.HasExited) { }
-            Log.Information("Image is saved as " + outputName + ".jpg");
+            Log.Information("Image is saved as " + outputName + ".png");
             Log.Information("******************************************************");
         }
     }

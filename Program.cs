@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
 
 namespace MapEditor
 {
@@ -11,14 +14,77 @@ namespace MapEditor
     {
         void CreateRandomMap(int times)
         {
+            var r = new Random();
             for (int i = 0; i < times; i++)
-            { 
+            {
                 var mapFile = new MapFile();
 
-                WorkingMap.Initialize(200, 200, Theater.NEWURBAN);
+                WorkingMap.Initialize(r.Next(140,200), r.Next(130, 200), Theater.NEWURBAN);
                 int range = WorkingMap.Width + WorkingMap.Height;
 
-                //AbstractMap.SetMapUnit(6, 6, "011");
+                int player = r.Next(1000);
+                if (player > 900)
+                {
+                    WorkingMap.PlacePlayerLocation(2, "NW");
+                    WorkingMap.PlacePlayerLocation(2, "SW");
+                    WorkingMap.PlacePlayerLocation(2, "NE");
+                    WorkingMap.PlacePlayerLocation(2, "SE");
+                }
+                else if (player > 800)
+                {
+                    WorkingMap.PlacePlayerLocation(1, "NW");
+                    WorkingMap.PlacePlayerLocation(1, "SW");
+                    WorkingMap.PlacePlayerLocation(1, "NE");
+                    WorkingMap.PlacePlayerLocation(1, "SE");
+                }
+                else if (player > 700)
+                {
+                    WorkingMap.PlacePlayerLocation(4, "NW");
+                    WorkingMap.PlacePlayerLocation(4, "SE");
+                }
+                else if (player > 500)
+                {
+                    WorkingMap.PlacePlayerLocation(1, "N");
+                    WorkingMap.PlacePlayerLocation(1, "S");
+                    WorkingMap.PlacePlayerLocation(1, "W");
+                    WorkingMap.PlacePlayerLocation(1, "E");
+                    WorkingMap.PlacePlayerLocation(1, "NE");
+                    WorkingMap.PlacePlayerLocation(1, "SE");
+                    WorkingMap.PlacePlayerLocation(1, "NW");
+                    WorkingMap.PlacePlayerLocation(1, "SW");
+                }
+                else if (player > 400)
+                {
+                    WorkingMap.PlacePlayerLocation(3, "N");
+                    WorkingMap.PlacePlayerLocation(3, "S");
+                }
+                else if (player > 300)
+                {
+                    WorkingMap.PlacePlayerLocation(3, "E");
+                    WorkingMap.PlacePlayerLocation(3, "W");
+                }
+                else if (player > 200)
+                {
+                    WorkingMap.PlacePlayerLocation(2, "N");
+                    WorkingMap.PlacePlayerLocation(2, "S");
+                    WorkingMap.PlacePlayerLocation(2, "W");
+                    WorkingMap.PlacePlayerLocation(2, "E");
+                }
+                else if (player > 100)
+                {
+                    WorkingMap.PlacePlayerLocation(2, "N");
+                    WorkingMap.PlacePlayerLocation(2, "S");
+                    WorkingMap.PlacePlayerLocation(2, "SW");
+                    WorkingMap.PlacePlayerLocation(2, "NE");
+                }
+                else
+                {
+                    WorkingMap.PlacePlayerLocation(3, "SW");
+                    WorkingMap.PlacePlayerLocation(3, "NE");
+                }
+
+
+                //WorkingMap.IncreaseWeightContainsX(6);
                 //WorkingMap.SetMapUnitByEntropy();
                 WorkingMap.SetMapUnitByOrder();
                 WorkingMap.FillRemainingEmptyUnitMap();
@@ -36,8 +102,13 @@ namespace MapEditor
                 mapFile.Aircraft = WorkingMap.CreateAircraftINI();
                 mapFile.Smudge = WorkingMap.CreateSmudgeINI();
                 mapFile.Waypoint = WorkingMap.CreateWaypointINI();
-                mapFile.AddComment(Constants.FilePath);
                 mapFile.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
+
+                mapFile.CorrectPreviewSize(Constants.WorkFolder + "随机地图" + i + ".yrm");
+                mapFile.CalculateStartingWaypoints(Constants.WorkFolder + "随机地图" + i + ".yrm");
+                mapFile.RandomSetLighting(Constants.WorkFolder + "随机地图" + i + ".yrm");
+                mapFile.RenderMapAndGeneratePreview(Constants.WorkFolder + "随机地图" + i + ".yrm");
+                mapFile.AddComment(Constants.WorkFolder + "随机地图" + i + ".yrm");
             }
 
         }
@@ -64,20 +135,24 @@ namespace MapEditor
                             _instance.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
                         }*/
 
-/*            var _instance = new Program();
-            _instance.CreateRandomMap(10);*/
+            var _instance = new Program();
+            _instance.CreateRandomMap(20);
 
 
 
             var mapFile = new MapFile();
 
-            WorkingMap.Initialize(200, 200, Theater.NEWURBAN);
+            WorkingMap.Initialize(140, 140, Theater.NEWURBAN);
             int range = WorkingMap.Width + WorkingMap.Height;
 
-            WorkingMap.PlacePlayerLocation(2, "NW");
-            WorkingMap.PlacePlayerLocation(2, "SW");
+            /*WorkingMap.PlacePlayerLocation(1, "N");
+            WorkingMap.PlacePlayerLocation(1, "S");
+            WorkingMap.PlacePlayerLocation(1, "W");
+            WorkingMap.PlacePlayerLocation(1, "E");*/
             WorkingMap.PlacePlayerLocation(2, "NE");
             WorkingMap.PlacePlayerLocation(2, "SE");
+            WorkingMap.PlacePlayerLocation(2, "NW");
+            WorkingMap.PlacePlayerLocation(2, "SW");
 
             //WorkingMap.IncreaseWeightContainsX(6);
             //WorkingMap.SetMapUnitByEntropy();
@@ -98,9 +173,14 @@ namespace MapEditor
             mapFile.Smudge = WorkingMap.CreateSmudgeINI();
             mapFile.Waypoint = WorkingMap.CreateWaypointINI();
             mapFile.SaveFullMap(Constants.FilePath);
-            mapFile.AddComment(Constants.FilePath);
-            //mapFile.RenderMap(Constants.FilePath);
 
+            //var bitmap = new Bitmap(@"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\test.bmp");
+            //mapFile.GenerateMapPreview(bitmap, Constants.FilePath);
+            mapFile.CorrectPreviewSize(Constants.FilePath);
+            mapFile.CalculateStartingWaypoints(Constants.FilePath);
+            mapFile.RandomSetLighting(Constants.FilePath);
+            mapFile.RenderMapAndGeneratePreview(Constants.FilePath); 
+            mapFile.AddComment(Constants.FilePath);
 
 
 

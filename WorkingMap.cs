@@ -1021,6 +1021,73 @@ namespace MapEditor
             return location;
         }
 
+        public static int[] GetCentralSideLocation(string direction)
+        {
+            int xLength = AbstractMapMemberMatrix.GetLength(0);
+            int yLength = AbstractMapMemberMatrix.GetLength(1);
+            if (direction == "N")
+            {
+                int order = 0;
+                int x = (int)Math.Floor((float)xLength / 4.0);
+                int y = (int)Math.Floor((float)yLength / 4.0);
+                while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
+                {
+                    if (order % 2 == 0)
+                        y += 1;
+                    else
+                        x += 1;
+                    order++;
+                }
+                return new int[2] { x, y };
+            }
+            if (direction == "W")
+            {
+                int order = 0;
+                int x = (int)Math.Floor((float)xLength / 4.0 - 0.25);
+                int y = (int)Math.Floor((float)yLength * 3.0 / 4.0);
+                while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
+                {
+                    if (order % 2 == 0)
+                        y -= 1;
+                    else
+                        x += 1;
+                    order++;
+                }
+                return new int[2] { x, y };
+            }
+            if (direction == "S")
+            {
+                int order = 0;
+                int x = (int)Math.Floor((float)xLength * 3.0 / 4.0);
+                int y = (int)Math.Floor((float)yLength * 3.0 / 4.0);
+                while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
+                {
+                    if (order % 2 == 0)
+                        x -= 1;
+                    else
+                        y -= 1;
+                    order++;
+                }
+                return new int[2] { x, y };
+            }
+            if (direction == "E")
+            {
+                int order = 0;
+                int x = (int)Math.Floor((float)xLength * 3.0 / 4.0);
+                int y = (int)Math.Floor((float)yLength / 4.0 - 0.25);
+                while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
+                {
+                    if (order % 2 == 0)
+                        x -= 1;
+                    else
+                        y += 1;
+                    order++;
+                }
+                return new int[2] { x, y };
+            }
+            return null;
+        }
+
         //make sure a group of Abs Map Units have enough place to place in four corners
         public static int[] GetEnoughPlaceAbsMapMemberLocation(string direction, int length)
         {
@@ -1225,6 +1292,15 @@ namespace MapEditor
                 playerLocation = GetEnoughPlaceAbsMapMemberLocation("SE", number);
             if (direction == "NE")
                 playerLocation = GetEnoughPlaceAbsMapMemberLocation("NE", number);
+            if (direction == "N")
+                playerLocation = GetCentralSideLocation("N");
+            if (direction == "S")
+                playerLocation = GetCentralSideLocation("S");
+            if (direction == "W")
+                playerLocation = GetCentralSideLocation("W");
+            if (direction == "E")
+                playerLocation = GetCentralSideLocation("E");
+
 
             if (direction == "NW" || direction == "SE")
             {
@@ -1242,6 +1318,153 @@ namespace MapEditor
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + i, playerLocation[1]);
                 }
             }
+            if (direction == "N" || direction == "S")
+            {
+                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
+                if (number == 1)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] - 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] - 1);
+                if (number == 2)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] + 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] + 1);
+                if (number == 3)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] + 2, playerLocation[1] - 2, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 2, playerLocation[1] - 2);
+            }
+            if (direction == "W" || direction == "E")
+            {
+                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
+                if (number == 1)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] + 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] + 1);
+                if (number == 2)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] - 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] - 1);
+                if (number == 3)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] + 2, playerLocation[1] + 2, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 2, playerLocation[1] + 2);
+            }
+            PlaceTiberiumMUNearPlayer();
+        }
+
+        public static void PlaceTiberiumMUNearPlayer()
+        {
+            List<string> tiberium1 = new List<string>();
+            foreach (var absMU in AbstractMapUnitList)
+            {
+                if (absMU.MapUnitName.Contains("tiberium1"))
+                {
+                    tiberium1.Add(absMU.MapUnitName);
+                }
+            }
+
+            List<string> tiberium2 = new List<string>();
+            foreach (var absMU in AbstractMapUnitList)
+            {
+                if (absMU.MapUnitName.Contains("tiberium2"))
+                {
+                    tiberium2.Add(absMU.MapUnitName);
+                }
+            }
+
+            int count = 0;
+            IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
+            for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
+                {
+                    var amm = AbstractMapMemberMatrix[i, j];
+                    if (amm.MapUnitName.Contains("spawn") && !amm.PlayerLocationHasTiberium)
+                    {
+                        count++;
+                        randomizer.Add(i.ToString() + "," + j.ToString(), 1);
+                    }
+                }
+            }
+            var r = new Random();
+            while (count > 0)
+            {
+                var result = randomizer.NextWithRemoval().Split(',');
+                int placeTiberium2Chance = r.Next(100);
+                if (count >= 2)
+                {
+                    if (placeTiberium2Chance > 63)
+                    { 
+                        RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium2);
+                        count -= 2;
+                        continue;
+                    }
+                }
+                RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
+                count -= 1;
+            }
+            foreach (var amm in AbstractMapMemberMatrix)
+            {
+                if (amm.MapUnitName.Contains("spawn") && !amm.PlayerLocationHasTiberium)
+                {
+                    amm.PlayerLocationHasTiberium = true;
+                }
+            }
+        }
+        //start to place the next group of tiberium
+        public static void SetAllPlayerHasTiberium()
+        {
+            foreach (var amm in AbstractMapMemberMatrix)
+            {
+                if (amm.MapUnitName.Contains("spawn") && !amm.PlayerLocationHasTiberium)
+                {
+                    amm.PlayerLocationHasTiberium = true;
+                }
+            }
+        }
+        public static void RandomPlaceMUNearbyAndAllOnMap(int x, int y, List<string> mapUnitName)
+        {
+            IWeightedRandomizer<int> randomizer = new DynamicWeightedRandomizer<int>();
+            if (!AbstractMapMemberMatrix[x, y - 1].Placed && AbstractMapMemberMatrix[x, y - 1].IsAllOnVisibleMap)
+                randomizer.Add(1, 1);
+            if (!AbstractMapMemberMatrix[x - 1, y].Placed && AbstractMapMemberMatrix[x - 1, y].IsAllOnVisibleMap)
+                randomizer.Add(2, 1);
+            if (!AbstractMapMemberMatrix[x, y + 1].Placed && AbstractMapMemberMatrix[x, y + 1].IsAllOnVisibleMap)
+                randomizer.Add(3, 1);
+            if (!AbstractMapMemberMatrix[x + 1, y].Placed && AbstractMapMemberMatrix[x + 1, y].IsAllOnVisibleMap)
+                randomizer.Add(4, 1);
+            if (randomizer.Count == 0)
+                return;
+            var result = randomizer.NextWithReplacement();
+            if (result == 1)
+                RandomSetMapUnit(x, y - 1, mapUnitName);
+            if (result == 2)
+                RandomSetMapUnit(x - 1, y, mapUnitName);
+            if (result == 3)
+                RandomSetMapUnit(x, y + 1, mapUnitName);
+            if (result == 4)
+                RandomSetMapUnit(x + 1, y, mapUnitName);
         }
 
         public static void IncreaseWeightContainsX(int type, int times = 1)

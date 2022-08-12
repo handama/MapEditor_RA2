@@ -17,6 +17,7 @@ namespace MapEditor
         public bool SWConnected { get; set; } = false;
         public int Entropy { get; set; } = 50;
         public bool IsAllOnVisibleMap { get; set; } = false;
+        public bool PlayerLocationHasTiberium { get; set; } = false;
         public AbstractMapUnit GetAbstractMapUnit()
         {
             var absMapUnit = new AbstractMapUnit();
