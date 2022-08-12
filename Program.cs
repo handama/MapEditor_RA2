@@ -82,7 +82,7 @@ namespace MapEditor
                     WorkingMap.PlacePlayerLocation(3, "SW");
                     WorkingMap.PlacePlayerLocation(3, "NE");
                 }
-
+                //WorkingMap.RandomPlaceMUInCenter(40);
 
                 //WorkingMap.IncreaseWeightContainsX(6);
                 //WorkingMap.SetMapUnitByEntropy();
@@ -135,14 +135,14 @@ namespace MapEditor
                             _instance.SaveFullMap(Constants.WorkFolder + "随机地图" + i + ".yrm");
                         }*/
 
-            var _instance = new Program();
-            _instance.CreateRandomMap(20);
+/*            var _instance = new Program();
+            _instance.CreateRandomMap(20);*/
 
 
 
             var mapFile = new MapFile();
 
-            WorkingMap.Initialize(140, 140, Theater.NEWURBAN);
+            WorkingMap.Initialize(160, 160, Theater.NEWURBAN);
             int range = WorkingMap.Width + WorkingMap.Height;
 
             /*WorkingMap.PlacePlayerLocation(1, "N");
@@ -153,6 +153,8 @@ namespace MapEditor
             WorkingMap.PlacePlayerLocation(2, "SE");
             WorkingMap.PlacePlayerLocation(2, "NW");
             WorkingMap.PlacePlayerLocation(2, "SW");
+
+            //WorkingMap.RandomPlaceMUInCenter(40);
 
             //WorkingMap.IncreaseWeightContainsX(6);
             //WorkingMap.SetMapUnitByEntropy();

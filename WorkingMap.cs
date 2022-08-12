@@ -31,6 +31,8 @@ namespace MapEditor
         public static List<Overlay> OverlayList { get; private set; }
         public static List<Waypoint> WaypointList { get; private set; }
         public static int IndicatorNum { get; private set; }
+
+        public static Random Randomizer { get; private set; }
         public static void Initialize(int width, int height, Theater theater)
         {
             Width = width;
@@ -51,6 +53,7 @@ namespace MapEditor
             SmudgeList = new List<Smudge>();
             OverlayList = new List<Overlay>();
             WaypointList = new List<Waypoint>();
+            Randomizer = new Random();
 
             for (int y = 0; y < range; y++)
             {
@@ -427,7 +430,42 @@ namespace MapEditor
         public static void RandomSetMapUnit(int x, int y, List<string> mapUnitName)
         {
             IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
-            foreach(var name in mapUnitName)
+
+            var nearby = GetNearbyAbstractMapMemberInfo(x, y);
+            if (nearby[0] != null)
+            {
+                for (int i = mapUnitName.Count - 1; i >= 0; i--)
+                {
+                    if (mapUnitName.Count > 1 && mapUnitName[i] == nearby[0].MapUnitName)
+                        mapUnitName.RemoveAt(i);
+                }
+            }
+            if (nearby[1] != null)
+            {
+                for (int i = mapUnitName.Count - 1; i >= 0; i--)
+                {
+                    if (mapUnitName.Count > 1 && mapUnitName[i] == nearby[1].MapUnitName)
+                        mapUnitName.RemoveAt(i);
+                }
+            }
+            if (nearby[2] != null)
+            {
+                for (int i = mapUnitName.Count - 1; i >= 0; i--)
+                {
+                    if (mapUnitName.Count > 1 && mapUnitName[i] == nearby[2].MapUnitName)
+                        mapUnitName.RemoveAt(i);
+                }
+            }
+            if (nearby[3] != null)
+            {
+                for (int i = mapUnitName.Count - 1; i >= 0; i--)
+                {
+                    if (mapUnitName.Count > 1 && mapUnitName[i] == nearby[3].MapUnitName)
+                        mapUnitName.RemoveAt(i);
+                }
+            }
+
+            foreach (var name in mapUnitName)
             {
                 randomizer.Add(name, 1);
             }
@@ -1017,7 +1055,7 @@ namespace MapEditor
         public static int[] GetCentralAbsMapMemberLocation()
         {
             int range = Width + Height;
-            int[] location = { (int)Math.Ceiling((float)range / 2.0 / (float)Constants.SideLength), (int)Math.Ceiling((float)range / 2.0 / (float)Constants.SideLength) };
+            int[] location = { (int)Math.Round((float)range / 2.0 / (float)Constants.SideLength - 0.15), (int)Math.Round((float)range / 2.0 / (float)Constants.SideLength - 0.15) };
             return location;
         }
 
@@ -1028,8 +1066,8 @@ namespace MapEditor
             if (direction == "N")
             {
                 int order = 0;
-                int x = (int)Math.Floor((float)xLength / 4.0);
-                int y = (int)Math.Floor((float)yLength / 4.0);
+                int x = (int)Math.Round((float)xLength / 4.0);
+                int y = (int)Math.Round((float)yLength / 4.0);
                 while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
                 {
                     if (order % 2 == 0)
@@ -1043,8 +1081,8 @@ namespace MapEditor
             if (direction == "W")
             {
                 int order = 0;
-                int x = (int)Math.Floor((float)xLength / 4.0 - 0.25);
-                int y = (int)Math.Floor((float)yLength * 3.0 / 4.0);
+                int x = (int)Math.Round((float)xLength / 4.0 - 0.5);
+                int y = (int)Math.Round((float)yLength * 3.0 / 4.0);
                 while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
                 {
                     if (order % 2 == 0)
@@ -1058,8 +1096,8 @@ namespace MapEditor
             if (direction == "S")
             {
                 int order = 0;
-                int x = (int)Math.Floor((float)xLength * 3.0 / 4.0);
-                int y = (int)Math.Floor((float)yLength * 3.0 / 4.0);
+                int x = (int)Math.Round((float)xLength * 3.0 / 4.0);
+                int y = (int)Math.Round((float)yLength * 3.0 / 4.0);
                 while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
                 {
                     if (order % 2 == 0)
@@ -1073,8 +1111,8 @@ namespace MapEditor
             if (direction == "E")
             {
                 int order = 0;
-                int x = (int)Math.Floor((float)xLength * 3.0 / 4.0);
-                int y = (int)Math.Floor((float)yLength / 4.0 - 0.25);
+                int x = (int)Math.Round((float)xLength * 3.0 / 4.0);
+                int y = (int)Math.Round((float)yLength / 4.0 - 0.15);
                 while (!AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
                 {
                     if (order % 2 == 0)
@@ -1198,6 +1236,9 @@ namespace MapEditor
 
         public static IniSection CreateUnitINI()
         {
+            if (UnitList.Count == 0)
+                return null;
+            Log.Information("Creating Unit ini...");
             var unitIniSection = new IniSection("Units");
             int index = 0;
             foreach (var unit in UnitList)
@@ -1209,6 +1250,9 @@ namespace MapEditor
         }
         public static IniSection CreateInfantryINI()
         {
+            if (InfantryList.Count == 0)
+                return null;
+            Log.Information("Creating Infantry ini...");
             var infantryIniSection = new IniSection("Infantry");
             int index = 0;
             foreach (var infantry in InfantryList)
@@ -1220,6 +1264,9 @@ namespace MapEditor
         }
         public static IniSection CreateStructureINI()
         {
+            if (StructureList.Count == 0)
+                return null;
+            Log.Information("Creating Structure ini...");
             var structureIniSection = new IniSection("Structures");
             int index = 0;
             foreach (var structure in StructureList)
@@ -1231,16 +1278,32 @@ namespace MapEditor
         }
         public static IniSection CreateTerrainINI()
         {
+            if (TerrainList.Count == 0)
+                return null;
+            Log.Information("Creating Terrain ini...");
             var terrainIniSection = new IniSection("Terrain");
             foreach (var terrain in TerrainList)
             {
                 var iniLine = terrain.CreateINILine();
-                terrainIniSection.AddKey(iniLine.Key, iniLine.Value);
+                //make sure lamps can be placed
+                if (terrainIniSection.KeyExists(iniLine.Key))
+                {
+                    if (terrainIniSection.GetStringValue(iniLine.Key,"TREE").Contains("TREE"))
+                    {
+                        terrainIniSection.RemoveKey(iniLine.Key);
+                        terrainIniSection.AddKey(iniLine.Key, iniLine.Value);
+                    }
+                }
+                else
+                    terrainIniSection.AddKey(iniLine.Key, iniLine.Value);
             }
             return terrainIniSection;
         }
         public static IniSection CreateAircraftINI()
         {
+            if (AircraftList.Count == 0)
+                return null;
+            Log.Information("Creating Aircraft ini...");
             var aircraftIniSection = new IniSection("Aircraft");
             int index = 0;
             foreach (var aircraft in AircraftList)
@@ -1252,6 +1315,9 @@ namespace MapEditor
         }
         public static IniSection CreateSmudgeINI()
         {
+            if (SmudgeList.Count == 0)
+                return null;
+            Log.Information("Creating Smudge ini...");
             var smudgeIniSection = new IniSection("Smudge");
             int index = 0;
             foreach (var smudge in SmudgeList)
@@ -1263,6 +1329,9 @@ namespace MapEditor
         }
         public static IniSection CreateWaypointINI()
         {
+            if (WaypointList.Count == 0)
+                return null;
+            Log.Information("Creating Waypoints ini...");
             var waypointIniSection = new IniSection("Waypoints");
             int index = 0;
             foreach (var waypoint in WaypointList)
@@ -1372,7 +1441,7 @@ namespace MapEditor
             }
             PlaceTiberiumMUNearPlayer();
         }
-
+        //start to place the next group of tiberium
         public static void PlaceTiberiumMUNearPlayer()
         {
             List<string> tiberium1 = new List<string>();
@@ -1407,23 +1476,73 @@ namespace MapEditor
                     }
                 }
             }
-            var r = new Random();
             while (count > 0)
             {
+                if (randomizer.Count == 0)
+                    break;
                 var result = randomizer.NextWithRemoval().Split(',');
-                int placeTiberium2Chance = r.Next(100);
+                int placeTiberium2Chance = Randomizer.Next(100);
+                bool success = false;
                 if (count >= 2)
                 {
                     if (placeTiberium2Chance > 63)
                     { 
-                        RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium2);
-                        count -= 2;
+                        success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium2);
+                        if (success)
+                            count -= 2;
                         continue;
                     }
                 }
-                RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
-                count -= 1;
+                success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
+                if (success)
+                    count -= 1;
             }
+
+            //sometimes there is no place to set tiberium...
+            if (count > 0)
+            {
+                for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
+                {
+                    for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
+                    {
+                        var amm = AbstractMapMemberMatrix[i, j];
+                        if (amm.MapUnitName.Contains("spawn") && !amm.PlayerLocationHasTiberium)
+                        {
+                            randomizer.Add(i.ToString() + "," + j.ToString(), 1);
+                        }
+                    }
+                }
+                int failure = 0;
+                while (count > 0)
+                {
+                    if (randomizer.Count == 0)
+                        break;
+                    var result = randomizer.NextWithReplacement().Split(',');
+                    int placeTiberium2Chance = Randomizer.Next(100);
+                    bool success = false;
+                    if (count >= 2)
+                    {
+                        if (placeTiberium2Chance > 63)
+                        {
+                            success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium2);
+                            if (success)
+                                count -= 2;
+                            continue;
+                        }
+                    }
+                    success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
+                    if (success)
+                        count -= 1;
+                    failure++;
+                    if (failure > 30)
+                    {
+                        Log.Warning("No place to ser tiberium map unit!");
+                        break;
+                    }
+                       
+                }
+            }
+
             foreach (var amm in AbstractMapMemberMatrix)
             {
                 if (amm.MapUnitName.Contains("spawn") && !amm.PlayerLocationHasTiberium)
@@ -1432,18 +1551,9 @@ namespace MapEditor
                 }
             }
         }
-        //start to place the next group of tiberium
-        public static void SetAllPlayerHasTiberium()
-        {
-            foreach (var amm in AbstractMapMemberMatrix)
-            {
-                if (amm.MapUnitName.Contains("spawn") && !amm.PlayerLocationHasTiberium)
-                {
-                    amm.PlayerLocationHasTiberium = true;
-                }
-            }
-        }
-        public static void RandomPlaceMUNearbyAndAllOnMap(int x, int y, List<string> mapUnitName)
+        
+
+        public static bool RandomPlaceMUNearbyAndAllOnMap(int x, int y, List<string> mapUnitName)
         {
             IWeightedRandomizer<int> randomizer = new DynamicWeightedRandomizer<int>();
             if (!AbstractMapMemberMatrix[x, y - 1].Placed && AbstractMapMemberMatrix[x, y - 1].IsAllOnVisibleMap)
@@ -1455,7 +1565,7 @@ namespace MapEditor
             if (!AbstractMapMemberMatrix[x + 1, y].Placed && AbstractMapMemberMatrix[x + 1, y].IsAllOnVisibleMap)
                 randomizer.Add(4, 1);
             if (randomizer.Count == 0)
-                return;
+                return false;
             var result = randomizer.NextWithReplacement();
             if (result == 1)
                 RandomSetMapUnit(x, y - 1, mapUnitName);
@@ -1465,6 +1575,24 @@ namespace MapEditor
                 RandomSetMapUnit(x, y + 1, mapUnitName);
             if (result == 4)
                 RandomSetMapUnit(x + 1, y, mapUnitName);
+            return true;
+        }
+
+        public static void RandomPlaceMUInCenter(int chance)
+        {
+            if (chance < Randomizer.Next(100))
+                return;
+            List<string> center = new List<string>();
+            foreach (var absMU in AbstractMapUnitList)
+            {
+                if (absMU.MapUnitName.Contains("center"))
+                {
+                    center.Add(absMU.MapUnitName);
+                }
+            }
+            int[] centerL = GetCentralAbsMapMemberLocation();
+            if (center.Count > 0)
+                RandomSetMapUnit(centerL[0], centerL[1], center);
         }
 
         public static void IncreaseWeightContainsX(int type, int times = 1)

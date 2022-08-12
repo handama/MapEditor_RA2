@@ -143,7 +143,8 @@ namespace MapEditor.TileInfo
                 {
                     var terrain = new Terrain();
                     terrain.Initialize(terrainLine);
-                    if (terrain != null && terrain.RelativeX < Constants.SideLength && terrain.RelativeX >= 0 && terrain.RelativeY < Constants.SideLength && terrain.RelativeY >= 0)
+                    //out of bounder is disabled here for placing lamps
+                    if (terrain != null ) //&& terrain.RelativeX < Constants.SideLength && terrain.RelativeX >= 0 && terrain.RelativeY < Constants.SideLength && terrain.RelativeY >= 0)
                         TerrainList.Add(terrain);
                 }
             }

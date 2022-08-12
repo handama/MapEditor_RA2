@@ -248,13 +248,20 @@ namespace MapEditor
             fullMap.SetStringValue("Map", "Size", "0,0," + Width.ToString() + "," + Height.ToString());
             fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
             fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
-            fullMap.AddSection(Unit);
-            fullMap.AddSection(Infantry);
-            fullMap.AddSection(Structure);
-            fullMap.AddSection(Terrain);
-            fullMap.AddSection(Aircraft);
-            fullMap.AddSection(Smudge);
-            fullMap.AddSection(Waypoint);
+            if (Unit != null)
+                fullMap.AddSection(Unit);
+            if (Infantry != null)
+                fullMap.AddSection(Infantry);
+            if (Structure != null)
+                fullMap.AddSection(Structure);
+            if (Terrain != null)
+                fullMap.AddSection(Terrain);
+            if (Aircraft != null)
+                fullMap.AddSection(Aircraft);
+            if (Smudge != null)
+                fullMap.AddSection(Smudge);
+            if (Waypoint != null)
+                fullMap.AddSection(Waypoint);
             fullMap.WriteIniFile(path);
             SaveIsoMapPack5(path);
             SaveOverlay(path);
