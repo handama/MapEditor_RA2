@@ -1,11 +1,14 @@
 [NAYARD]
-TechLevel=11
+AIBuildThis=no
+AIBuildCounts=0,0,0
 
 [GAYARD]
-TechLevel=11
+AIBuildThis=no
+AIBuildCounts=0,0,0
 
 [YAYARD]
-TechLevel=11
+AIBuildThis=no
+AIBuildCounts=0,0,0
 
 [Header]
 Width=45

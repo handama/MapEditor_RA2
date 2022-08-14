@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MapEditor.NonTileObjects
+namespace RandomMapGenerator.NonTileObjects
 {
     public class Terrain
     {
@@ -20,8 +20,8 @@ namespace MapEditor.NonTileObjects
             string x = key.Substring(key.Length - 3, 3);
             string y = key.Substring(0, key.Length - 3);
             Name = iniLine.Value;
-            RelativeX = int.Parse(x) - Constants.StartingXY;
-            RelativeY = int.Parse(y) - Constants.StartingXY;
+            RelativeX = int.Parse(x) - WorkingMap.StartingX;
+            RelativeY = int.Parse(y) - WorkingMap.StartingY;
         }
         public Terrain Clone()
         {

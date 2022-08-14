@@ -1,4 +1,4 @@
-﻿using MapEditor.TileInfo;
+﻿using RandomMapGenerator.TileInfo;
 using Rampastring.Tools;
 using System;
 using System.Collections.Generic;
@@ -6,10 +6,10 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using Weighted_Randomizer;
-using MapEditor.NonTileObjects;
+using RandomMapGenerator.NonTileObjects;
 using Serilog;
 
-namespace MapEditor
+namespace RandomMapGenerator
 {
     public static class WorkingMap
     {
@@ -17,7 +17,7 @@ namespace MapEditor
         public static int Height { get; private set; }
         public static int[] Size { get; private set; }
         public static AbstractTile[,] AbsTile { get; private set; }
-        public static int Theater { get; private set; }
+        public static int MapTheater { get; private set; }
         public static List<AbstractMapUnit> AbstractMapUnitList { get; private set; }
         public static AbstractMapMember[,] AbstractMapMemberMatrix { get; private set; }
         public static List<int[]> PlacedAbstractMapUnitRecord { get; private set; }
@@ -31,18 +31,52 @@ namespace MapEditor
         public static List<Overlay> OverlayList { get; private set; }
         public static List<Waypoint> WaypointList { get; private set; }
         public static int IndicatorNum { get; private set; }
+        public static string Path { get; private set; }
+        public static int MapUnitWidth { get; private set; }
+        public static int MapUnitHeight { get; private set; }
+        public static int StartingX { get; private set; }
+        public static int StartingY { get; private set; }
 
         public static Random Randomizer { get; private set; }
-        public static void Initialize(int width, int height, Theater theater)
+
+        public static void SterilizeMapUnit(string path)
         {
+            if (!path.EndsWith("\\"))
+                path = path + "\\";
+            Path = path;
+
+            AbstractMapUnitList = new List<AbstractMapUnit>();
+            DirectoryInfo root = new DirectoryInfo(Path);
+
+            var indicatorMap = new MapFile();
+            indicatorMap.CreateIsoTileList(Path + "indicator.map");
+            IndicatorNum = indicatorMap.IsoTileList[0].TileNum;
+
+            foreach (FileInfo f in root.GetFiles())
+            {
+                if ((f.Extension == ".map" || f.Extension == ".yrm" || f.Extension == ".mpr") && f.Name != "indicator.map")
+                {
+                    var absMapUnit = new AbstractMapUnit();
+                    absMapUnit.Initialize(f);
+                    AbstractMapUnitList.Add(absMapUnit);
+                }
+            }
+        }
+        public static void Initialize(int width, int height, string path)
+        {
+            var settings = new IniFile(path);
+            MapUnitWidth = int.Parse(settings.GetStringValue("settings", "MapUnitSize", "25x25").Split('x')[0]);
+            MapUnitHeight = int.Parse(settings.GetStringValue("settings", "MapUnitSize", "25x25").Split('x')[1]);
+            StartingX = int.Parse(settings.GetStringValue("settings", "TopCorner", "18,18").Split(',')[0]);
+            StartingY = int.Parse(settings.GetStringValue("settings", "TopCorner", "18,18").Split(',')[1]);
+
             Width = width;
             Height = height;
-            Theater = (int)theater;
             int range = Width + Height;
             AbsTile = new AbstractTile[range, range];
             Size = new int[2] { Width, Height };
-            AbstractMapUnitList = new List<AbstractMapUnit>();
-            AbstractMapMemberMatrix = new AbstractMapMember [(int)Math.Ceiling((float)range / (float)Constants.SideLength), (int)Math.Ceiling((float)range / (float)Constants.SideLength)];
+
+            AbstractMapMemberMatrix = new AbstractMapMember [(int)Math.Ceiling((float)range / (float)MapUnitWidth), (int)Math.Ceiling((float)range / (float)MapUnitHeight)];
             PlacedAbstractMapUnitRecord = new List<int[]>();
             FailureAbsMapUnitRecordList = new List<FailureAbstractMapUnitRecord>();
             UnitList = new List<Unit>();
@@ -54,6 +88,33 @@ namespace MapEditor
             OverlayList = new List<Overlay>();
             WaypointList = new List<Waypoint>();
             Randomizer = new Random();
+
+            
+            string theater = settings.GetStringValue("settings", "Theater", "NEWURBAN");
+            if (!string.IsNullOrEmpty(theater))
+            {
+                switch (Enum.Parse(typeof(Theater), theater))
+                {
+                    case Theater.NEWURBAN:
+                        MapTheater = (int)Theater.NEWURBAN;
+                        break;
+                    case Theater.URBAN:
+                        MapTheater = (int)Theater.URBAN;
+                        break;
+                    case Theater.TEMPERATE:
+                        MapTheater = (int)Theater.TEMPERATE;
+                        break;
+                    case Theater.LUNAR:
+                        MapTheater = (int)Theater.LUNAR;
+                        break;
+                    case Theater.DESERT:
+                        MapTheater = (int)Theater.DESERT;
+                        break;
+                    case Theater.SNOW:
+                        MapTheater = (int)Theater.SNOW;
+                        break;
+                }
+            }
 
             for (int y = 0; y < range; y++)
             {
@@ -77,17 +138,17 @@ namespace MapEditor
                 for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
                     AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap = true;
-                    for (int x = 0; x < Constants.SideLength; x++)
+                    for (int x = 0; x < MapUnitWidth; x++)
                     {
-                        for (int y = 0; y < Constants.SideLength; y++)
+                        for (int y = 0; y < MapUnitHeight; y++)
                         {
-                            if (i * Constants.SideLength + x < range && j * Constants.SideLength + y < range)
+                            if (i * MapUnitWidth + x < range && j * MapUnitHeight + y < range)
                             {
-                                if (IsValidAT(i * Constants.SideLength + x, j * Constants.SideLength + y))
+                                if (IsValidAT(i * MapUnitWidth + x, j * MapUnitHeight + y))
                                 {
-                                    if (AbsTile[i * Constants.SideLength + x, j * Constants.SideLength + y].IsOnMap)
+                                    if (AbsTile[i * MapUnitWidth + x, j * MapUnitHeight + y].IsOnMap)
                                         AbstractMapMemberMatrix[i, j].IsOnMap = true;
-                                    if (!AbsTile[i * Constants.SideLength + x, j * Constants.SideLength + y].IsOnVisibleMap)
+                                    if (!AbsTile[i * MapUnitWidth + x, j * MapUnitHeight + y].IsOnVisibleMap)
                                         AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap = false;
                                 }
                             }
@@ -133,7 +194,6 @@ namespace MapEditor
                 }
             }
 
-            SterilizeMapUnit();
         }
         public static bool IsValidAUM(int x, int y)
         {
@@ -148,41 +208,6 @@ namespace MapEditor
                 return true;
             else
                 return false;
-        }
-
-        public static void SterilizeMapUnit()
-        {
-            string workingPath = "";
-            if (Theater == 0)
-                workingPath = Constants.TEMPERATEPath;
-            else if (Theater == 1)
-                workingPath = Constants.SNOWPath;
-            else if (Theater == 2)
-                workingPath = Constants.URBANPath;
-            else if (Theater == 3)
-                workingPath = Constants.NEWURBANPath;
-            else if (Theater == 4)
-                workingPath = Constants.LUNARPath;
-            else if (Theater == 5)
-                workingPath = Constants.DESERTPath;
-            else
-                return;
-
-            DirectoryInfo root = new DirectoryInfo(workingPath);
-
-            var indicatorMap = new MapFile();
-            indicatorMap.CreateIsoTileList(workingPath + "indicator.map");
-            IndicatorNum = indicatorMap.IsoTileList[0].TileNum;
-
-            foreach (FileInfo f in root.GetFiles())
-            {
-                if ((f.Extension ==".map" || f.Extension == ".yrm" || f.Extension == ".mpr") && f.Name != "indicator.map")
-                {
-                    var absMapUnit = new AbstractMapUnit();
-                    absMapUnit.Initialize(f);
-                    AbstractMapUnitList.Add(absMapUnit);
-                }
-            }
         }
 
         public static AbstractMapUnit GetAbstractMapUnitByName(string mapUnitName)
@@ -225,16 +250,16 @@ namespace MapEditor
             var absMapUnit = GetAbstractMapUnitByName(mapUnitName);
             AbstractMapMemberMatrix[x, y].Placed = true;
 
-            for (int i = 0; i < Constants.SideLength; i++)
+            for (int i = 0; i < MapUnitWidth; i++)
             {
-                for (int j = 0; j < Constants.SideLength; j++)
+                for (int j = 0; j < MapUnitHeight; j++)
                 {
-                    if (IsValidAT(x * Constants.SideLength + i, y * Constants.SideLength + j))
+                    if (IsValidAT(x * MapUnitWidth + i, y * MapUnitHeight + j))
                     {
                         var absTileType = absMapUnit.AbsTileType[i, j];
                         var absTile = new AbstractTile();
-                        absTile.SetProperty(x * Constants.SideLength + i, y * Constants.SideLength + j, 0, absTileType);
-                        AbsTile[x * Constants.SideLength + i, y * Constants.SideLength + j] = absTile;
+                        absTile.SetProperty(x * MapUnitWidth + i, y * MapUnitHeight + j, 0, absTileType);
+                        AbsTile[x * MapUnitWidth + i, y * MapUnitHeight + j] = absTile;
                     }
                 }
             }            
@@ -263,8 +288,8 @@ namespace MapEditor
                         for (int k = 0; k < unitList.Count; k++)
                         {
                             var newUnit = unitList[k].Clone();
-                            newUnit.X = newUnit.RelativeX + i * Constants.SideLength;
-                            newUnit.Y = newUnit.RelativeY + j * Constants.SideLength;
+                            newUnit.X = newUnit.RelativeX + i * MapUnitWidth;
+                            newUnit.Y = newUnit.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newUnit.X, newUnit.Y))
                             {
@@ -278,8 +303,8 @@ namespace MapEditor
                         for (int k = 0; k < infantryList.Count; k++)
                         {
                             var newInfantry = infantryList[k].Clone();
-                            newInfantry.X = newInfantry.RelativeX + i * Constants.SideLength;
-                            newInfantry.Y = newInfantry.RelativeY + j * Constants.SideLength;
+                            newInfantry.X = newInfantry.RelativeX + i * MapUnitWidth;
+                            newInfantry.Y = newInfantry.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newInfantry.X, newInfantry.Y))
                             {
@@ -293,8 +318,8 @@ namespace MapEditor
                         for (int k = 0; k < structureList.Count; k++)
                         {
                             var newStructure = structureList[k].Clone();
-                            newStructure.X = newStructure.RelativeX + i * Constants.SideLength;
-                            newStructure.Y = newStructure.RelativeY + j * Constants.SideLength;
+                            newStructure.X = newStructure.RelativeX + i * MapUnitWidth;
+                            newStructure.Y = newStructure.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newStructure.X, newStructure.Y))
                             {
@@ -308,8 +333,8 @@ namespace MapEditor
                         for (int k = 0; k < terrainList.Count; k++)
                         {
                             var newTerrain = terrainList[k].Clone();
-                            newTerrain.X = newTerrain.RelativeX + i * Constants.SideLength;
-                            newTerrain.Y = newTerrain.RelativeY + j * Constants.SideLength;
+                            newTerrain.X = newTerrain.RelativeX + i * MapUnitWidth;
+                            newTerrain.Y = newTerrain.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newTerrain.X, newTerrain.Y))
                             {
@@ -323,8 +348,8 @@ namespace MapEditor
                         for (int k = 0; k < aircraftList.Count; k++)
                         {
                             var newAircraft = aircraftList[k].Clone();
-                            newAircraft.X = newAircraft.RelativeX + i * Constants.SideLength;
-                            newAircraft.Y = newAircraft.RelativeY + j * Constants.SideLength;
+                            newAircraft.X = newAircraft.RelativeX + i * MapUnitWidth;
+                            newAircraft.Y = newAircraft.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newAircraft.X, newAircraft.Y))
                             {
@@ -338,8 +363,8 @@ namespace MapEditor
                         for (int k = 0; k < smudgeList.Count; k++)
                         {
                             var newSmudge = smudgeList[k].Clone();
-                            newSmudge.X = newSmudge.RelativeX + i * Constants.SideLength;
-                            newSmudge.Y = newSmudge.RelativeY + j * Constants.SideLength;
+                            newSmudge.X = newSmudge.RelativeX + i * MapUnitWidth;
+                            newSmudge.Y = newSmudge.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newSmudge.X, newSmudge.Y))
                             {
@@ -353,8 +378,8 @@ namespace MapEditor
                         for (int k = 0; k < waypointList.Count; k++)
                         {
                             var newWaypoint = waypointList[k].Clone();
-                            newWaypoint.X = newWaypoint.RelativeX + i * Constants.SideLength;
-                            newWaypoint.Y = newWaypoint.RelativeY + j * Constants.SideLength;
+                            newWaypoint.X = newWaypoint.RelativeX + i * MapUnitWidth;
+                            newWaypoint.Y = newWaypoint.RelativeY + j * MapUnitHeight;
 
                             if (IsValidAT(newWaypoint.X, newWaypoint.Y))
                             {
@@ -370,8 +395,8 @@ namespace MapEditor
                             var newOverlay =  new Overlay(overlayList[k].OverlayID, overlayList[k].OverlayValue);//overlayList[k].Clone();
                             var tile = overlayList[k].Tile;
                             newOverlay.Tile = new IsoTile(tile.Dx, tile.Dy, tile.Rx, tile.Ry, tile.Z, tile.TileNum, tile.SubTile);
-                            newOverlay.Tile.Rx = (ushort)(newOverlay.Tile.Rx + i * Constants.SideLength);
-                            newOverlay.Tile.Ry = (ushort)(newOverlay.Tile.Ry + j * Constants.SideLength);
+                            newOverlay.Tile.Rx = (ushort)(newOverlay.Tile.Rx + i * MapUnitWidth);
+                            newOverlay.Tile.Ry = (ushort)(newOverlay.Tile.Ry + j * MapUnitHeight);
 
                             if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
                             {
@@ -1055,7 +1080,7 @@ namespace MapEditor
         public static int[] GetCentralAbsMapMemberLocation()
         {
             int range = Width + Height;
-            int[] location = { (int)Math.Round((float)range / 2.0 / (float)Constants.SideLength - 0.15), (int)Math.Round((float)range / 2.0 / (float)Constants.SideLength - 0.15) };
+            int[] location = { (int)Math.Round((float)range / 2.0 / (float)MapUnitWidth - 0.15), (int)Math.Round((float)range / 2.0 / (float)MapUnitHeight - 0.15) };
             return location;
         }
 
@@ -1154,11 +1179,11 @@ namespace MapEditor
 
                 for (int i = 0; i < AbstractMapMemberMatrix.GetLength(1); i++)
                 {
-                    for (int j = 0; j < AbstractMapMemberMatrix.GetLength(0); j++)
+                    for (int j = AbstractMapMemberMatrix.GetLength(0) - 1; j >= 0; j--)
                     {
                         if (IsValidAUM(j, i) && IsValidAUM(j + length - 1, i))
                         {
-                            if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j + length - 1, i].IsAllOnVisibleMap)
+                            if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j - length + 1, i].IsAllOnVisibleMap)
                             {
                                 result[0] = j;
                                 result[1] = i;
@@ -1173,7 +1198,7 @@ namespace MapEditor
 
                 for (int i = AbstractMapMemberMatrix.GetLength(1) - 1 ; i >= 0; i--)
                 {
-                    for (int j = AbstractMapMemberMatrix.GetLength(0) - 1; j >= 0 ; j--)
+                    for (int j = 0 ; j < AbstractMapMemberMatrix.GetLength(0) ; j++)
                     {
                         if (IsValidAUM(j, i) && IsValidAUM(j + length - 1, i))
                         {
@@ -1196,7 +1221,7 @@ namespace MapEditor
                     {
                         if (IsValidAUM(i, j) && IsValidAUM(i, j + length - 1))
                         {
-                            if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j + length - 1].IsAllOnVisibleMap)
+                            if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j - length + 1].IsAllOnVisibleMap)
                             {
                                 result[0] = i;
                                 result[1] = j;
@@ -1344,6 +1369,8 @@ namespace MapEditor
         }
         public static void PlacePlayerLocation(int number, string direction)
         {
+            if (number == 0)
+                return;
             List<string> startingUnits = new List<string>();
             foreach (var absMU in AbstractMapUnitList)
             {
@@ -1371,7 +1398,7 @@ namespace MapEditor
                 playerLocation = GetCentralSideLocation("E");
 
 
-            if (direction == "NW" || direction == "SE")
+            if (direction == "NW")
             {
                 for (int i = 0; i < number; i++)
                 {
@@ -1379,7 +1406,7 @@ namespace MapEditor
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1] + i);
                 }
             }
-            else if (direction == "SW" || direction == "NE")
+            else if (direction == "SW")
             {
                 for (int i = 0; i < number; i++)
                 {
@@ -1387,7 +1414,23 @@ namespace MapEditor
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + i, playerLocation[1]);
                 }
             }
-            if (direction == "N" || direction == "S")
+            else if (direction == "SE")
+            {
+                for (int i = 0; i < number; i++)
+                {
+                    RandomSetMapUnit(playerLocation[0], playerLocation[1] - i, startingUnits);
+                    Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1] - i);
+                }
+            }
+            else if (direction == "NE")
+            {
+                for (int i = 0; i < number; i++)
+                {
+                    RandomSetMapUnit(playerLocation[0] - i, playerLocation[1], startingUnits);
+                    Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - i, playerLocation[1]);
+                }
+            }
+            if (direction == "N")
             {
                 RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
@@ -1413,7 +1456,59 @@ namespace MapEditor
                 RandomSetMapUnit(playerLocation[0] + 2, playerLocation[1] - 2, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 2, playerLocation[1] - 2);
             }
-            if (direction == "W" || direction == "E")
+            else if (direction == "W")
+            {
+                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
+                if (number == 1)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] - 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] - 1);
+                if (number == 2)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] + 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] + 1);
+                if (number == 3)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] - 2, playerLocation[1] - 2, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 2, playerLocation[1] - 2);
+            }
+            else if (direction == "S")
+            {
+                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
+                if (number == 1)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] + 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] + 1);
+                if (number == 2)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] - 1, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] - 1);
+                if (number == 3)
+                {
+                    PlaceTiberiumMUNearPlayer();
+                    return;
+                }
+                RandomSetMapUnit(playerLocation[0] - 2, playerLocation[1] + 2, startingUnits);
+                Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 2, playerLocation[1] + 2);
+            }
+            else if (direction == "E")
             {
                 RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
@@ -1536,7 +1631,7 @@ namespace MapEditor
                     failure++;
                     if (failure > 30)
                     {
-                        Log.Warning("No place to ser tiberium map unit!");
+                        Log.Warning("No place to set tiberium map unit!");
                         break;
                     }
                        
@@ -1623,6 +1718,45 @@ namespace MapEditor
                         }
                     }
                 }
+            }
+        }
+
+        public static void ChangeStructureHealth(int min, int max, int destroyPercentage = 0)
+        {
+            if (min < 0)
+                min = 0;
+            if (max > 256)
+                max = 256;
+
+            foreach (var structure in StructureList)
+            {
+                if (structure.Name != "CABHUT")
+                {
+                    structure.Strength = Randomizer.Next(min, max);
+                    int destroyed = Randomizer.Next(100);
+                    if (destroyed < destroyPercentage)
+                        structure.Strength = 0;
+                }
+            }
+        }
+        public static void ChangeUnitAirInfHealth(int min, int max)
+        {
+            if (min < 0)
+                min = 0;
+            if (max > 256)
+                max = 256;
+
+            foreach (var unit in UnitList)
+            {
+                unit.Strength = Randomizer.Next(min, max);
+            }
+            foreach (var aircraft in AircraftList)
+            {
+                aircraft.Strength = Randomizer.Next(min, max);
+            }
+            foreach (var infantry in InfantryList)
+            {
+                infantry.Strength = Randomizer.Next(min, max);
             }
         }
     }

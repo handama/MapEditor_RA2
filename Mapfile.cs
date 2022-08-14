@@ -7,13 +7,13 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using Rampastring.Tools;
-using MapEditor.TileInfo;
+using RandomMapGenerator.TileInfo;
 using System.Linq.Expressions;
 using System.Diagnostics;
 using Serilog;
 using System.Globalization;
 
-namespace MapEditor
+namespace RandomMapGenerator
 {
     class MapFile
     {
@@ -350,6 +350,7 @@ namespace MapEditor
                     OverlayList.Add(ovl);
                 }
             }
+
             return OverlayList;
         }
         public void AddComment(string path)

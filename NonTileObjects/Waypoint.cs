@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MapEditor.NonTileObjects
+namespace RandomMapGenerator.NonTileObjects
 {
     public class Waypoint
     {
@@ -20,8 +20,8 @@ namespace MapEditor.NonTileObjects
             string x = value.Substring(value.Length - 3, 3);
             string y = value.Substring(0, value.Length - 3);
             Index = int.Parse(iniLine.Key);
-            RelativeX = int.Parse(x) - Constants.StartingXY;
-            RelativeY = int.Parse(y) - Constants.StartingXY;
+            RelativeX = int.Parse(x) - WorkingMap.StartingX;
+            RelativeY = int.Parse(y) - WorkingMap.StartingY;
         }
         public Waypoint Clone()
         {

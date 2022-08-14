@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MapEditor.NonTileObjects
+namespace RandomMapGenerator.NonTileObjects
 {
     public class Structure
     {
@@ -35,8 +35,8 @@ namespace MapEditor.NonTileObjects
                 Owner = values[0];
                 Name = values[1];
                 Strength = int.Parse(values[2]);
-                RelativeX = int.Parse(values[3]) - Constants.StartingXY;
-                RelativeY = int.Parse(values[4]) - Constants.StartingXY;
+                RelativeX = int.Parse(values[3]) - WorkingMap.StartingX;
+                RelativeY = int.Parse(values[4]) - WorkingMap.StartingY;
                 Direction = int.Parse(values[5]);
                 Tag = values[6];
                 Sellable = int.Parse(values[7]);

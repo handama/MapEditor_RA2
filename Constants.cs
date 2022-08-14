@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MapEditor
+namespace RandomMapGenerator
 {
     static class Constants
     {
-        public static string WorkFolder = @"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\";
+        public static string WorkFolder { get; set; } = @"C:\Users\hanfangxu\Documents\GitHub\MapEditor_RA2\";
         public static string FileName = "map.yrm";
         public static string SaveFileName = "Output.txt";
         public static string MapPackName = "IsoMapPack5";
@@ -27,8 +27,5 @@ namespace MapEditor
         public static int FailureTimes = 10000;
         public static string RenderPath = WorkFolder + @"Map Renderer\CNCMaps.Renderer.exe";
         public static string GamePath = @"D:\Games\YURI\Red Alert 2";
-
-        public static int SideLength = 25;//15;
-        public static int StartingXY = 18;//13;
     }
 }
