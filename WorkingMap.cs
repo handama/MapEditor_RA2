@@ -269,6 +269,7 @@ namespace RandomMapGenerator
         {
             Log.Information("******************************************************");
             Log.Information("Start creating non-tile objects");
+            Log.Information("******************************************************");
             for (int i = 0; i < AbstractMapMemberMatrix.GetLength(0); i++)
             {
                 for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
@@ -406,7 +407,8 @@ namespace RandomMapGenerator
                         }
                     }
                 }
-            } 
+            }
+            Log.Information("******************************************************");
             Log.Information("End of creating non-tile objects");
             Log.Information("******************************************************");
         }

@@ -75,9 +75,7 @@ namespace RandomMapGenerator
             }
 
             Log.Logger = new LoggerConfiguration().WriteTo.File(@".\log\"+"log-.txt", rollingInterval: RollingInterval.Minute).CreateLogger();
-            Log.Information("******************************************************");
-            Log.Information("*******************Creating New Map*******************");
-            Log.Information("******************************************************");
+           
 
             var result = Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(RunOptions)
@@ -132,6 +130,9 @@ namespace RandomMapGenerator
             
             while (loop)
             {
+                Log.Information("******************************************************");
+                Log.Information("*******************Creating New Map*******************");
+                Log.Information("******************************************************");
                 string fullPath = "";
                 string internalNameRandom = "";
                 if (option.TotalRandom == 0)
