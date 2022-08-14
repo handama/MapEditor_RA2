@@ -3,7 +3,7 @@ How to use
 -------
 目前可以通过预制的地形块随机生成地图，示例可见MapUnits\NEWURBAN
 ![map](使用方法.png)
-![map](map.jpg)
+![map](thumb_map.jpg)
 
 
 Acknowledgments
