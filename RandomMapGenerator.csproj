@@ -164,4 +164,9 @@
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>XCOPY $(ProjectDir)copyFiles $(TargetDir) /e /y
+
+</PostBuildEvent>
+  </PropertyGroup>
 </Project>

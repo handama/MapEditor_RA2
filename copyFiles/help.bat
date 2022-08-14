@@ -1,0 +1,1 @@
+start ./RandomMapGenerator.exe --help

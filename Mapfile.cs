@@ -244,7 +244,7 @@ namespace RandomMapGenerator
 
         public void SaveFullMap(string path)
         {
-            var fullMap = new IniFile(Constants.TemplateMapPath);
+            var fullMap = new IniFile(Program.TemplateMap);
             fullMap.SetStringValue("Map", "Size", "0,0," + Width.ToString() + "," + Height.ToString());
             fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
             fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
@@ -478,6 +478,13 @@ namespace RandomMapGenerator
             MapFile.WriteIniFile();
         }
 
+        public void ChangeName(string filePath, string name)
+        {
+            var MapFile = new IniFile(filePath);
+            MapFile.SetStringValue("Basic", "Name", name);
+            MapFile.WriteIniFile();
+        }
+
         public void RandomSetLighting(string filePath)
         {
             var MapFile = new IniFile(filePath);
@@ -567,7 +574,7 @@ namespace RandomMapGenerator
             Log.Information("Rendering Map...");
             Process MapRenderer = new Process();
             var outputName = path.Split('\\').Last().Split('.')[0];
-            MapRenderer.StartInfo.FileName = Constants.RenderPath;
+            MapRenderer.StartInfo.FileName = Program.RenderderPath;
             MapRenderer.StartInfo.UseShellExecute = false;
             MapRenderer.StartInfo.CreateNoWindow = true;
             MapRenderer.StartInfo.Arguments ="-i \"" + path + "\" -p -o \"" + outputName + "\" -m \"" + Constants.GamePath + "\" -r -z +(1000,0) --mark-start-pos -s  --preview-markers-selected";

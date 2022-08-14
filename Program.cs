@@ -61,7 +61,8 @@ namespace RandomMapGenerator
         public static string OutputFolder;
         public static string RenderderPath;
         public static string GameFolder;
-        
+        public static string TemplateMap;
+
         static void Main(string[] args)
         {
             if (args.Count() == 0)
@@ -115,12 +116,15 @@ namespace RandomMapGenerator
                 Directory.CreateDirectory(OutputFolder);
             }
 
-            RenderderPath = settings.GetStringValue("RenderderPath", ".").EndsWith("\\") ? settings.GetStringValue("RenderderPath", ".") : settings.GetStringValue("RenderderPath", ".") + "\\";
+            RenderderPath = settings.GetStringValue("RenderderPath", ".");
             GameFolder = settings.GetStringValue("GameFolder", ".").EndsWith("\\") ? settings.GetStringValue("GameFolder", ".") : settings.GetStringValue("GameFolder", ".") + "\\";
-            var outputName = settings.GetStringValue("OutputName", ".");
-            var outputExtension = settings.GetStringValue("OutputExtension", ".");
+            TemplateMap = settings.GetStringValue("TemplateMap", "templateMap.map");
 
-            
+            var outputName = settings.GetStringValue("OutputName", "No Name");
+            var outputExtension = settings.GetStringValue("OutputExtension", "yrm");
+            var internalName = settings.GetStringValue("OutputInternalName", "No Name");
+
+
             bool loop = true;
             int count = 0;
 
@@ -129,6 +133,7 @@ namespace RandomMapGenerator
             while (loop)
             {
                 string fullPath = "";
+                string internalNameRandom = "";
                 if (option.TotalRandom == 0)
                 {
                     fullPath = OutputFolder + outputName + "." + outputExtension;
@@ -139,6 +144,7 @@ namespace RandomMapGenerator
                 {
                     fullPath = OutputFolder + outputName + (count + 1).ToString() + "." + outputExtension;
                     Console.WriteLine("Generating random map " + outputName + (count + 1).ToString() + "." + outputExtension + " ...");
+                    internalNameRandom = internalName + (count + 1).ToString();
                 }
                     
 
@@ -311,6 +317,15 @@ namespace RandomMapGenerator
                 mapFile.CorrectPreviewSize(fullPath);
                 mapFile.CalculateStartingWaypoints(fullPath);
                 mapFile.RandomSetLighting(fullPath);
+                if (option.TotalRandom == 0)
+                {
+                    mapFile.ChangeName(fullPath, internalName);
+                }
+                else
+                {
+                    mapFile.ChangeName(fullPath, internalNameRandom);
+                }
+
                 if (!option.NoThumbnail)
                     mapFile.RenderMapAndGeneratePreview(fullPath);
                 mapFile.AddComment(fullPath);
