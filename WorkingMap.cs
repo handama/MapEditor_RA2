@@ -64,7 +64,7 @@ namespace RandomMapGenerator
         }
         public static void Initialize(int width, int height, string path)
         {
-            var settings = new IniFile(path);
+            var settings = new IniFile(path + "settings.ini");
             MapUnitWidth = int.Parse(settings.GetStringValue("settings", "MapUnitSize", "25x25").Split('x')[0]);
             MapUnitHeight = int.Parse(settings.GetStringValue("settings", "MapUnitSize", "25x25").Split('x')[1]);
             StartingX = int.Parse(settings.GetStringValue("settings", "TopCorner", "18,18").Split(',')[0]);
@@ -1325,10 +1325,10 @@ namespace RandomMapGenerator
             foreach (var terrain in TerrainList)
             {
                 var iniLine = terrain.CreateINILine();
-                //make sure lamps can be placed
+                //make sure traffic lights can be placed
                 if (terrainIniSection.KeyExists(iniLine.Key))
                 {
-                    if (terrainIniSection.GetStringValue(iniLine.Key,"TREE").Contains("TREE"))
+                    if (terrainIniSection.GetStringValue(iniLine.Key,"TREE").Contains("TREE") || terrain.Name.Contains("TRFF"))
                     {
                         terrainIniSection.RemoveKey(iniLine.Key);
                         terrainIniSection.AddKey(iniLine.Key, iniLine.Value);
@@ -1394,6 +1394,8 @@ namespace RandomMapGenerator
                     startingUnits.Add(absMU.MapUnitName);
                 }
             }
+            if (startingUnits.Count == 0)
+                return;
             int[] playerLocation = new int[2];
             if (direction == "NW")
                 playerLocation = GetEnoughPlaceAbsMapMemberLocation("NW", number);
@@ -1571,6 +1573,8 @@ namespace RandomMapGenerator
                     tiberium2.Add(absMU.MapUnitName);
                 }
             }
+            if (tiberium1.Count + tiberium2.Count == 0)
+                return;
 
             int count = 0;
             IWeightedRandomizer<string> randomizer = new DynamicWeightedRandomizer<string>();
@@ -1595,7 +1599,7 @@ namespace RandomMapGenerator
                 bool success = false;
                 if (count >= 2)
                 {
-                    if (placeTiberium2Chance > 63)
+                    if (placeTiberium2Chance > 63 && tiberium2.Count > 0)
                     { 
                         success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium2);
                         if (success)
@@ -1603,7 +1607,8 @@ namespace RandomMapGenerator
                         continue;
                     }
                 }
-                success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
+                if (tiberium1.Count > 0)
+                    success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
                 if (success)
                     count -= 1;
             }
@@ -1632,7 +1637,7 @@ namespace RandomMapGenerator
                     bool success = false;
                     if (count >= 2)
                     {
-                        if (placeTiberium2Chance > 63)
+                        if (placeTiberium2Chance > 63 && tiberium2.Count > 0)
                         {
                             success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium2);
                             if (success)
@@ -1640,7 +1645,8 @@ namespace RandomMapGenerator
                             continue;
                         }
                     }
-                    success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
+                    if (tiberium1.Count > 0)
+                        success = RandomPlaceMUNearbyAndAllOnMap(int.Parse(result[0]), int.Parse(result[1]), tiberium1);
                     if (success)
                         count -= 1;
                     failure++;

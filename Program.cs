@@ -117,7 +117,11 @@ namespace RandomMapGenerator
                 Directory.CreateDirectory(OutputFolder);
             }
 
-            RenderderPath = settings.GetStringValue("RenderderPath", ".");
+# if x64
+            RenderderPath = settings.GetStringValue("RenderderPath64", ".");
+#elif x86
+            RenderderPath = settings.GetStringValue("RenderderPath32", ".");
+#endif
             GameFolder = settings.GetStringValue("GameFolder", ".").EndsWith("\\") ? settings.GetStringValue("GameFolder", ".") : settings.GetStringValue("GameFolder", ".") + "\\";
             TemplateMap = settings.GetStringValue("TemplateMap", "templateMap.map");
 
@@ -288,6 +292,8 @@ namespace RandomMapGenerator
                         WorkingMap.PlacePlayerLocation(1, "SE");
                     }
                 }
+
+                //WorkingMap.RandomPlaceMUInCenter(r.Next(20, 80));
 
                 WorkingMap.SetMapUnitByOrder();
                 WorkingMap.FillRemainingEmptyUnitMap();
