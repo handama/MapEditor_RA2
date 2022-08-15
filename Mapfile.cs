@@ -570,6 +570,7 @@ namespace RandomMapGenerator
     
         public void RenderMapAndGeneratePreview(string path)
         {
+            path = Program.ProgramFolder + "\\" + path;
             Log.Information("******************************************************");
             Log.Information("Rendering Map...");
             Process MapRenderer = new Process();
@@ -577,7 +578,7 @@ namespace RandomMapGenerator
             MapRenderer.StartInfo.FileName = Program.RenderderPath;
             MapRenderer.StartInfo.UseShellExecute = false;
             MapRenderer.StartInfo.CreateNoWindow = true;
-            MapRenderer.StartInfo.Arguments ="-i \"" + path + "\" -p -o \"" + outputName + "\" -m \"" + Program.GameFolder + "\" -r -z +(1000,0) --mark-start-pos -s  --preview-markers-selected";
+            MapRenderer.StartInfo.Arguments = $@"-i ""{path}"" -p -o ""{outputName}"" -m ""{Program.GameFolder.Trim('\\')}"" -r --mark-start-pos -s=4 --preview-markers-selected -z +(1500,0)"; //"-i \"" + path + "\" -p -o \"" + outputName + "\" -m \"" + Program.GameFolder + "\" -r --mark-start-pos --preview-markers-selected";
             MapRenderer.Start();
             while (!MapRenderer.HasExited) { }
             Log.Information("Image is saved as " + outputName + ".png");

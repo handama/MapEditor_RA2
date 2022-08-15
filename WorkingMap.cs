@@ -210,6 +210,19 @@ namespace RandomMapGenerator
                 return false;
         }
 
+        public static bool IsOnMapAT(int x, int y)
+        {
+            bool isOnMap = false;
+            if (y > Size[0] - x - 1
+                && y < 2 * Size[1] + Size[0] - x
+                && y < x + Size[0] + 1
+                && y > x - Size[0] - 1)
+            {
+                isOnMap = true;
+            }
+            return isOnMap;
+        }
+
         public static AbstractMapUnit GetAbstractMapUnitByName(string mapUnitName)
         {
             var absMapUnit = new AbstractMapUnit();
@@ -292,7 +305,7 @@ namespace RandomMapGenerator
                             newUnit.X = newUnit.RelativeX + i * MapUnitWidth;
                             newUnit.Y = newUnit.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newUnit.X, newUnit.Y))
+                            if (IsValidAT(newUnit.X, newUnit.Y) && IsOnMapAT(newUnit.X, newUnit.Y))
                             {
                                 UnitList.Add(newUnit);
                                 Log.Information("Add unit [{0}] in [{1},{2}]", newUnit.Name, newUnit.X, newUnit.Y);
@@ -307,7 +320,7 @@ namespace RandomMapGenerator
                             newInfantry.X = newInfantry.RelativeX + i * MapUnitWidth;
                             newInfantry.Y = newInfantry.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newInfantry.X, newInfantry.Y))
+                            if (IsValidAT(newInfantry.X, newInfantry.Y) && IsOnMapAT(newInfantry.X, newInfantry.Y))
                             {
                                 InfantryList.Add(newInfantry);
                                 Log.Information("Add infantry [{0}] in [{1},{2}]", newInfantry.Name, newInfantry.X, newInfantry.Y);
@@ -322,7 +335,7 @@ namespace RandomMapGenerator
                             newStructure.X = newStructure.RelativeX + i * MapUnitWidth;
                             newStructure.Y = newStructure.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newStructure.X, newStructure.Y))
+                            if (IsValidAT(newStructure.X, newStructure.Y) && IsOnMapAT(newStructure.X, newStructure.Y))
                             {
                                 StructureList.Add(newStructure);
                                 Log.Information("Add structure [{0}] in [{1},{2}]", newStructure.Name, newStructure.X, newStructure.Y);
@@ -337,7 +350,7 @@ namespace RandomMapGenerator
                             newTerrain.X = newTerrain.RelativeX + i * MapUnitWidth;
                             newTerrain.Y = newTerrain.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newTerrain.X, newTerrain.Y))
+                            if (IsValidAT(newTerrain.X, newTerrain.Y) && IsOnMapAT(newTerrain.X, newTerrain.Y))
                             {
                                 TerrainList.Add(newTerrain);
                                 Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
@@ -352,7 +365,7 @@ namespace RandomMapGenerator
                             newAircraft.X = newAircraft.RelativeX + i * MapUnitWidth;
                             newAircraft.Y = newAircraft.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newAircraft.X, newAircraft.Y))
+                            if (IsValidAT(newAircraft.X, newAircraft.Y) && IsOnMapAT(newAircraft.X, newAircraft.Y))
                             {
                                 AircraftList.Add(newAircraft);
                                 Log.Information("Add aircraft [{0}] in [{1},{2}]", newAircraft.Name, newAircraft.X, newAircraft.Y);
@@ -367,7 +380,7 @@ namespace RandomMapGenerator
                             newSmudge.X = newSmudge.RelativeX + i * MapUnitWidth;
                             newSmudge.Y = newSmudge.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newSmudge.X, newSmudge.Y))
+                            if (IsValidAT(newSmudge.X, newSmudge.Y) && IsOnMapAT(newSmudge.X, newSmudge.Y))
                             {
                                 SmudgeList.Add(newSmudge);
                                 Log.Information("Add smudge [{0}] in [{1},{2}]", newSmudge.Name, newSmudge.X, newSmudge.Y);
@@ -382,7 +395,7 @@ namespace RandomMapGenerator
                             newWaypoint.X = newWaypoint.RelativeX + i * MapUnitWidth;
                             newWaypoint.Y = newWaypoint.RelativeY + j * MapUnitHeight;
 
-                            if (IsValidAT(newWaypoint.X, newWaypoint.Y))
+                            if (IsValidAT(newWaypoint.X, newWaypoint.Y) && IsOnMapAT(newWaypoint.X, newWaypoint.Y))
                             {
                                 WaypointList.Add(newWaypoint);
                                 Log.Information("Add waypoint [{0}] in [{1},{2}]", WaypointList.Count() - 1, newWaypoint.X, newWaypoint.Y);
@@ -399,7 +412,7 @@ namespace RandomMapGenerator
                             newOverlay.Tile.Rx = (ushort)(newOverlay.Tile.Rx + i * MapUnitWidth);
                             newOverlay.Tile.Ry = (ushort)(newOverlay.Tile.Ry + j * MapUnitHeight);
 
-                            if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
+                            if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry) && IsOnMapAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
                             {
                                 OverlayList.Add(newOverlay);
                                 Log.Information("Add overlay [{0},{1}] in [{2},{3}]", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);

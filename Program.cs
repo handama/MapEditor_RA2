@@ -62,6 +62,7 @@ namespace RandomMapGenerator
         public static string RenderderPath;
         public static string GameFolder;
         public static string TemplateMap;
+        public static string ProgramFolder;
 
         static void Main(string[] args)
         {
@@ -109,6 +110,8 @@ namespace RandomMapGenerator
             var settings = new IniFile("settings.ini").GetSection("settings");
             WorkingFolder = settings.GetStringValue("WorkingFolder", ".").EndsWith("\\") ? settings.GetStringValue("WorkingFolder", ".") : settings.GetStringValue("WorkingFolder", ".") + "\\";
             OutputFolder = settings.GetStringValue("OutputFolder", ".").EndsWith("\\") ? settings.GetStringValue("OutputFolder", ".") : settings.GetStringValue("OutputFolder", ".") + "\\";
+            ProgramFolder = Environment.CurrentDirectory;
+
             if (!Directory.Exists(OutputFolder))
             {
                 Directory.CreateDirectory(OutputFolder);
