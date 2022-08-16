@@ -8,7 +8,7 @@ MIXPATH = '-m "D:\Games\YURI\Red Alert 2" '
 #是否渲染地图
 RENDERMAP=1
 #渲染器目录
-RENDERERPATH = '"D:\\test\\ColdAI3rdWithCncnet_working\\Map Renderer\\CNCMaps.Renderer.exe" '
+RENDERERPATH = r'"..\..\copyFiles\Map Renderer\CNCMaps.Renderer.exe"'
 #渲染矿石
 ORE = '-r '
 FullMap = '-F '
@@ -44,7 +44,7 @@ for i in range(0,len(list)):
             register.append(title[-3]+"\\"+title[-2]+"\\"+ title[-1] +"\n")
             AUTHOR = title[-2]
             content.append(TITLE)
-            filepath = '-i "'+abspath+'" '
+            filepath = ' -i "'+abspath+'" '
             outputname = '-o "'+name[:-4]+'" '
             if RENDERMAP:
                 command = RENDERERPATH+filepath+PNG+outputname+MIXPATH+ORE+FullMap

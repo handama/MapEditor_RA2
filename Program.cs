@@ -55,7 +55,7 @@ namespace RandomMapGenerator
         [Option('d' ,"damanged-building", Required = false, HelpText = "建筑物将会随机受损")]
         public bool DamangedBuilding { get; set; }
 
-        [Option('s', "smudge", Required = false, HelpText = "随机产生污染与弹坑（参数=生成密度，建议低于0.1。）")]
+        [Option('s', "smudge", Required = false, HelpText = "随机产生污染与弹坑（参数=生成密度，建议低于0.1）")]
         public double Smudge { get; set; }
     }
     class Program

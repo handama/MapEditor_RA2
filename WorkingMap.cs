@@ -58,10 +58,12 @@ namespace RandomMapGenerator
 
             var smudgeMap = new MapFile();
             smudgeMap.CreateIsoTileList(Path + "cannotplacesmudge.map");
-            foreach(var tile in smudgeMap.IsoTileList)
+
+            foreach (var tile in smudgeMap.IsoTileList)
             {
-                if (tile.TileNum != 0 || tile.TileNum != -1)
+                if (tile.TileNum != 0 && tile.TileNum != -1)
                 {
+
                     var absTileType = new AbstractTileType();
                     absTileType.TileNum = tile.TileNum;
                     absTileType.SubTile = tile.SubTile;
