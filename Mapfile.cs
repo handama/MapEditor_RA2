@@ -356,7 +356,7 @@ namespace RandomMapGenerator
         public void AddComment(string path)
         {
             var saveFile = new IniFile(path);
-            saveFile.Comment = "This map is created by HFX's Random map creator.\n; Visit https://github.com/handama/MapEditor_RA2 to get the latest version.";
+            saveFile.Comment = "This map is created by HFX's Random map generator.\n; Visit https://github.com/handama/MapEditor_RA2 to get the latest version.";
             saveFile.WriteIniFile();
         }
 
