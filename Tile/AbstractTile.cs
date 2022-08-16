@@ -13,6 +13,14 @@ namespace RandomMapGenerator
         public bool IsOnMap { get; private set; }
         public bool IsOnVisibleMap { get; private set; }
         public bool Edited { get; private set; }
+        public bool HasStructure { get; set; }
+        public bool HasUnit { get; set; }
+        public bool HasAircraft { get; set; }
+        public bool HasInfantry { get; set; }
+        public int InfantryCount { get; set; }
+        public bool HasSmudge { get; set; }
+        public bool HasTerrain { get; set; }
+        public bool HasOverlay { get; set; }
         public void Initialize(int x, int y)
         {
             X = x;
@@ -40,6 +48,15 @@ namespace RandomMapGenerator
             }
             IsOnMap = isOnMap;
             IsOnVisibleMap = isOnVisibleMap;
+
+            HasStructure = false;
+            HasUnit = false;
+            HasAircraft = false;
+            HasInfantry = false;
+            InfantryCount = 0;
+            HasSmudge = false;
+            HasTerrain = false;
+            HasOverlay = false;
         }
         public void SetProperty(int x, int y, int z, TileInfo.AbstractTileType absTileType)
         {

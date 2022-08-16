@@ -14,6 +14,6 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <StartArguments>-w 140 -h 160 --nwp 4 --sep 4 -d</StartArguments>
+    <StartArguments>-w 180 -h 160 --nwp 4 --sep 4 -d -s 0.05</StartArguments>
   </PropertyGroup>
 </Project>

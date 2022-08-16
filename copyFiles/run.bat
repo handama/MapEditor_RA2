@@ -1,1 +1,1 @@
-start ./RandomMapGenerator.exe -w 180 -h 160 --nwp 4 --sep 4 -d
+start ./RandomMapGenerator.exe -w 180 -h 160 --nwp 4 --sep 4 -d -s 0.03

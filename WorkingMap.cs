@@ -36,6 +36,9 @@ namespace RandomMapGenerator
         public static int MapUnitHeight { get; private set; }
         public static int StartingX { get; private set; }
         public static int StartingY { get; private set; }
+        public static IniFile Rules { get; private set; }
+        public static IniFile Art { get; private set; }
+        public static List<AbstractTileType> CannotPlaceSmudgeList { get; private set; }
 
         public static Random Randomizer { get; private set; }
 
@@ -46,15 +49,29 @@ namespace RandomMapGenerator
             Path = path;
 
             AbstractMapUnitList = new List<AbstractMapUnit>();
+            CannotPlaceSmudgeList = new List<AbstractTileType>();
             DirectoryInfo root = new DirectoryInfo(Path);
 
             var indicatorMap = new MapFile();
             indicatorMap.CreateIsoTileList(Path + "indicator.map");
             IndicatorNum = indicatorMap.IsoTileList[0].TileNum;
 
+            var smudgeMap = new MapFile();
+            smudgeMap.CreateIsoTileList(Path + "cannotplacesmudge.map");
+            foreach(var tile in smudgeMap.IsoTileList)
+            {
+                if (tile.TileNum != 0 || tile.TileNum != -1)
+                {
+                    var absTileType = new AbstractTileType();
+                    absTileType.TileNum = tile.TileNum;
+                    absTileType.SubTile = tile.SubTile;
+                    CannotPlaceSmudgeList.Add(absTileType);
+                }
+            }
+
             foreach (FileInfo f in root.GetFiles())
             {
-                if ((f.Extension == ".map" || f.Extension == ".yrm" || f.Extension == ".mpr") && f.Name != "indicator.map")
+                if ((f.Extension == ".map" || f.Extension == ".yrm" || f.Extension == ".mpr") && f.Name != "indicator.map" && f.Name != "cannotplacesmudge.map")
                 {
                     var absMapUnit = new AbstractMapUnit();
                     absMapUnit.Initialize(f);
@@ -89,7 +106,10 @@ namespace RandomMapGenerator
             WaypointList = new List<Waypoint>();
             Randomizer = new Random();
 
-            
+            Rules = new IniFile(Program.RulesPath);
+            Art = new IniFile(Program.ArtPath);
+
+
             string theater = settings.GetStringValue("settings", "Theater", "NEWURBAN");
             if (!string.IsNullOrEmpty(theater))
             {
@@ -297,6 +317,33 @@ namespace RandomMapGenerator
                     var overlayList = absMapMember.GetAbstractMapUnit().OverlayList;
                     var waypointList = absMapMember.GetAbstractMapUnit().WaypointList;
 
+                    if (structureList != null && structureList.Count > 0)
+                    {
+                        for (int k = 0; k < structureList.Count; k++)
+                        {
+                            var newStructure = structureList[k].Clone();
+                            newStructure.X = newStructure.RelativeX + i * MapUnitWidth;
+                            newStructure.Y = newStructure.RelativeY + j * MapUnitHeight;
+
+                            if (IsValidAT(newStructure.X, newStructure.Y) && IsOnMapAT(newStructure.X, newStructure.Y))
+                            {
+                                if (CanPlaceStructure(newStructure.X, newStructure.Y, newStructure.Name))
+                                {
+                                    StructureList.Add(newStructure);
+                                    Log.Information("Add structure [{0}] in [{1},{2}]", newStructure.Name, newStructure.X, newStructure.Y);
+                                    for (int l = 0; l < GetStructureSize(newStructure.Name)[0]; l++)
+                                    {
+                                        for (int m = 0; m < GetStructureSize(newStructure.Name)[1]; m++)
+                                        {
+                                            AbsTile[newStructure.X + l, newStructure.Y + m].HasStructure = true;
+                                        }
+                                    }
+                                }
+                                else
+                                    Log.Warning("Cannot structure unit [{0}] in [{1},{2}] because it is blocked", newStructure.Name, newStructure.X, newStructure.Y);
+                            }
+                        }
+                    }
                     if (unitList != null && unitList.Count > 0)
                     {    
                         for (int k = 0; k < unitList.Count; k++)
@@ -307,8 +354,14 @@ namespace RandomMapGenerator
 
                             if (IsValidAT(newUnit.X, newUnit.Y) && IsOnMapAT(newUnit.X, newUnit.Y))
                             {
-                                UnitList.Add(newUnit);
-                                Log.Information("Add unit [{0}] in [{1},{2}]", newUnit.Name, newUnit.X, newUnit.Y);
+                                if (CanPlaceUnit(newUnit.X, newUnit.Y))
+                                {
+                                    UnitList.Add(newUnit);
+                                    Log.Information("Add unit [{0}] in [{1},{2}]", newUnit.Name, newUnit.X, newUnit.Y);
+                                    AbsTile[newUnit.X, newUnit.Y].HasUnit = true;
+                                }
+                                else
+                                    Log.Warning("Cannot place unit [{0}] in [{1},{2}] because it is blocked", newUnit.Name, newUnit.X, newUnit.Y);
                             }
                         }
                     }
@@ -322,23 +375,15 @@ namespace RandomMapGenerator
 
                             if (IsValidAT(newInfantry.X, newInfantry.Y) && IsOnMapAT(newInfantry.X, newInfantry.Y))
                             {
-                                InfantryList.Add(newInfantry);
-                                Log.Information("Add infantry [{0}] in [{1},{2}]", newInfantry.Name, newInfantry.X, newInfantry.Y);
-                            }
-                        }
-                    }
-                    if (structureList != null && structureList.Count > 0)
-                    {
-                        for (int k = 0; k < structureList.Count; k++)
-                        {
-                            var newStructure = structureList[k].Clone();
-                            newStructure.X = newStructure.RelativeX + i * MapUnitWidth;
-                            newStructure.Y = newStructure.RelativeY + j * MapUnitHeight;
-
-                            if (IsValidAT(newStructure.X, newStructure.Y) && IsOnMapAT(newStructure.X, newStructure.Y))
-                            {
-                                StructureList.Add(newStructure);
-                                Log.Information("Add structure [{0}] in [{1},{2}]", newStructure.Name, newStructure.X, newStructure.Y);
+                                if (CanPlaceInfantry(newInfantry.X, newInfantry.Y))
+                                {
+                                    InfantryList.Add(newInfantry);
+                                    Log.Information("Add infantry [{0}] in [{1},{2}]", newInfantry.Name, newInfantry.X, newInfantry.Y);
+                                    AbsTile[newInfantry.X, newInfantry.Y].HasInfantry = true;
+                                    AbsTile[newInfantry.X, newInfantry.Y].InfantryCount++;
+                                }
+                                else
+                                    Log.Warning("Cannot place infantry [{0}] in [{1},{2}] because it is blocked", newInfantry.Name, newInfantry.X, newInfantry.Y);
                             }
                         }
                     }
@@ -352,8 +397,28 @@ namespace RandomMapGenerator
 
                             if (IsValidAT(newTerrain.X, newTerrain.Y) && IsOnMapAT(newTerrain.X, newTerrain.Y))
                             {
-                                TerrainList.Add(newTerrain);
-                                Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
+                                if (newTerrain.Name.Contains("TRFF")) // make sure traffic lights can be placed.
+                                {
+                                    if (CanPlaceTRFF(newTerrain.X, newTerrain.Y))
+                                    {
+                                        TerrainList.Add(newTerrain);
+                                        Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
+                                        AbsTile[newTerrain.X, newTerrain.Y].HasTerrain = true;
+                                    }
+                                    else
+                                        Log.Warning("Cannot place terrain [{0}] in [{1},{2}] because it is blocked", newTerrain.Name, newTerrain.X, newTerrain.Y);
+                                }
+                                else
+                                {
+                                    if (CanPlaceTerrain(newTerrain.X, newTerrain.Y))
+                                    {
+                                        TerrainList.Add(newTerrain);
+                                        Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
+                                        AbsTile[newTerrain.X, newTerrain.Y].HasTerrain = true;
+                                    }
+                                    else
+                                        Log.Warning("Cannot place terrain [{0}] in [{1},{2}] because it is blocked", newTerrain.Name, newTerrain.X, newTerrain.Y);
+                                }
                             }
                         }
                     }
@@ -367,8 +432,14 @@ namespace RandomMapGenerator
 
                             if (IsValidAT(newAircraft.X, newAircraft.Y) && IsOnMapAT(newAircraft.X, newAircraft.Y))
                             {
-                                AircraftList.Add(newAircraft);
-                                Log.Information("Add aircraft [{0}] in [{1},{2}]", newAircraft.Name, newAircraft.X, newAircraft.Y);
+                                if (CanPlaceAircraft(newAircraft.X, newAircraft.Y))
+                                {
+                                    AircraftList.Add(newAircraft);
+                                    Log.Information("Add aircraft [{0}] in [{1},{2}]", newAircraft.Name, newAircraft.X, newAircraft.Y);
+                                    AbsTile[newAircraft.X, newAircraft.Y].HasAircraft = true;
+                                }
+                                else
+                                    Log.Warning("Cannot place aircraft [{0}] in [{1},{2}] because it is blocked", newAircraft.Name, newAircraft.X, newAircraft.Y);
                             }
                         }
                     }
@@ -382,8 +453,20 @@ namespace RandomMapGenerator
 
                             if (IsValidAT(newSmudge.X, newSmudge.Y) && IsOnMapAT(newSmudge.X, newSmudge.Y))
                             {
-                                SmudgeList.Add(newSmudge);
-                                Log.Information("Add smudge [{0}] in [{1},{2}]", newSmudge.Name, newSmudge.X, newSmudge.Y);
+                                if (CanPlaceSmudge(newSmudge.X, newSmudge.Y, newSmudge.Name))
+                                {
+                                    SmudgeList.Add(newSmudge);
+                                    Log.Information("Add smudge [{0}] in [{1},{2}]", newSmudge.Name, newSmudge.X, newSmudge.Y);
+                                    for (int l = 0; l < GetSmudgeSize(newSmudge.Name)[0]; l++)
+                                    {
+                                        for (int m = 0; m < GetSmudgeSize(newSmudge.Name)[1]; m++)
+                                        {
+                                            AbsTile[newSmudge.X + l, newSmudge.Y + m].HasSmudge = true;
+                                        }
+                                    }
+                                }
+                                else
+                                    Log.Warning("Cannot place smudge [{0}] in [{1},{2}] because it is blocked", newSmudge.Name, newSmudge.X, newSmudge.Y);
                             }
                         }
                     }
@@ -414,8 +497,14 @@ namespace RandomMapGenerator
 
                             if (IsValidAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry) && IsOnMapAT(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
                             {
-                                OverlayList.Add(newOverlay);
-                                Log.Information("Add overlay [{0},{1}] in [{2},{3}]", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);
+                                if (CanPlaceOverlay(newOverlay.Tile.Rx, newOverlay.Tile.Ry))
+                                {
+                                    OverlayList.Add(newOverlay);
+                                    Log.Information("Add overlay [{0},{1}] in [{2},{3}]", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);
+                                    AbsTile[newOverlay.Tile.Rx, newOverlay.Tile.Ry].HasOverlay = true;
+                                }
+                                else
+                                    Log.Warning("Cannot place overlay [{0},{1}] in [{2},{3}] because it is blocked", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);
                             }
                         }
                     }
@@ -1778,6 +1867,201 @@ namespace RandomMapGenerator
             foreach (var infantry in InfantryList)
             {
                 infantry.Strength = Randomizer.Next(min, max);
+            }
+        }
+        public static int[] GetStructureSize(string name)
+        {
+            string artName = name;
+            if (Rules.SectionExists(name))
+            {
+                if (Rules.KeyExists(name, "Image"))
+                    artName = Rules.GetStringValue(name, "Image", name);
+            }
+            else return new int[2] { 1, 1 };
+
+            if (!Art.KeyExists(artName, "Foundation"))
+                return new int[2] { 1, 1 };
+            var foundation = Art.GetStringValue(artName, "Foundation", "1x1");
+            int width = int.Parse(foundation.Split(new char[2]{ 'x', 'X'})[0]);
+            int height = int.Parse(foundation.Split(new char[2] { 'x', 'X' })[1]);
+            return new int[2] { width, height };
+        }
+
+        public static int[] GetSmudgeSize(string name)
+        {
+            int width = 1;
+            int height = 1;
+
+            if (Rules.SectionExists(name))
+            {
+                if (Rules.KeyExists(name, "Width"))
+                    width = Rules.GetIntValue(name, "Width", 1);
+                if (Rules.KeyExists(name, "Height"))
+                    height = Rules.GetIntValue(name, "Height", 1);
+            }
+            return new int[2] { width, height };
+        }
+
+        public static bool CanPlaceStructure(int x, int y, string name)
+        {
+            for (int i = 0; i < GetStructureSize(name)[0]; i ++)
+            {
+                for (int j = 0; j < GetStructureSize(name)[1]; j++)
+                {
+                    if (!IsValidAT(x + i, y + j))
+                        return false;
+                    var absTile = AbsTile[x + i, y + j];
+                    if (absTile.HasStructure || absTile.HasAircraft || absTile.HasUnit || absTile.HasInfantry 
+                        || absTile.HasTerrain || absTile.HasOverlay || absTile.HasSmudge)
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        public static bool CanPlaceUnit(int x, int y)
+        {
+            var absTile = AbsTile[x , y];
+            if (absTile.HasAircraft || absTile.HasUnit || absTile.HasInfantry
+                || absTile.HasTerrain) //absTile.HasStructure : sometimes, units are placed on structures like Service Depot.
+                return false;
+            return true;
+        }
+        public static bool CanPlaceAircraft(int x, int y)
+        {
+            return CanPlaceUnit(x, y);
+        }
+        public static bool CanPlaceTerrain(int x, int y)
+        {
+            var absTile = AbsTile[x, y];
+            if (absTile.HasStructure || absTile.HasAircraft || absTile.HasUnit || absTile.HasInfantry
+                || absTile.HasTerrain)
+                return false;
+            return true;
+        }
+        public static bool CanPlaceTRFF(int x, int y)
+        {
+            var absTile = AbsTile[x, y];
+            if (absTile.HasStructure || absTile.HasAircraft || absTile.HasUnit || absTile.HasInfantry)
+                return false;
+            return true;
+        }
+        public static bool CanPlaceSmudge(int x, int y, string name)
+        {
+            for (int i = 0; i < GetSmudgeSize(name)[0]; i++)
+            {
+                for (int j = 0; j < GetSmudgeSize(name)[1]; j++)
+                {
+                    if (!IsValidAT(x + i, y + j))
+                        return false;
+                    var absTile = AbsTile[x + i, y + j];
+                    if (absTile.HasStructure || absTile.HasTerrain || absTile.HasOverlay || absTile.HasSmudge)
+                    {
+                        return false;
+                    }
+                    foreach (var absTileType in CannotPlaceSmudgeList)
+                    {
+                        if (absTileType.TileNum == absTile.TileNum)
+                            return false;
+                    }
+                }
+            }
+            return true;
+        }
+        public static bool CanPlaceInfantry(int x, int y)
+        {
+            var absTile = AbsTile[x, y];
+            if (absTile.HasStructure || absTile.HasAircraft || absTile.HasUnit || absTile.InfantryCount >= 3
+                || absTile.HasTerrain)
+                return false;
+            return true;
+        }
+        public static bool CanPlaceOverlay(int x, int y)
+        {
+            var absTile = AbsTile[x, y];
+            if (absTile.HasStructure || absTile.HasTerrain || absTile.HasSmudge || absTile.HasOverlay)
+                return false;
+            return true;
+        }
+        public static void RandomPlaceSmudge(double density)
+        {
+            if (density > 0.5)
+            {
+                Log.Warning("The density is considered too high.");
+                return;
+            }
+            if (density < 0)
+            {
+                Log.Warning("The density should between 0 and 0.5!");
+                return;
+            }
+
+            double currentDensity = 0;
+            int range = Width + Height;
+            string[] smudgeList = new string[] 
+            {
+                "BURNT01",
+                "BURNT02",
+                "BURNT03",
+                "BURNT04",
+                "BURNT05",
+                "BURNT06",
+                "BURNT07",
+                "BURNT08",
+                "BURNT09",
+                "BURNT10",
+                "BURNT11",
+                "BURNT12",
+                "CRATER01",
+                "CRATER02",
+                "CRATER03",
+                "CRATER04",
+                "CRATER05",
+                "CRATER06",
+                "CRATER07",
+                "CRATER08",
+                "CRATER09",
+                "CRATER10",
+                "CRATER11",
+                "CRATER12"
+            };
+            int loopTimes = 0;
+
+            while (density > currentDensity)
+            {
+                int x = Randomizer.Next(0, range);
+                int y = Randomizer.Next(0, range);
+
+                if (!AbsTile[x, y].IsOnMap)
+                    continue;
+
+                int choice = Randomizer.Next(smudgeList.Length);
+                if (!CanPlaceSmudge(x, y, smudgeList[choice]))
+                    continue;
+
+                var newSmudge = new Smudge();
+                newSmudge.X = x;
+                newSmudge.Y = y;
+                newSmudge.Name = smudgeList[choice];
+
+                SmudgeList.Add(newSmudge);
+                Log.Information("Random place smudge [{0}] in [{1},{2}]", newSmudge.Name, newSmudge.X, newSmudge.Y);
+                for (int l = 0; l < GetSmudgeSize(newSmudge.Name)[0]; l++)
+                {
+                    for (int m = 0; m < GetSmudgeSize(newSmudge.Name)[1]; m++)
+                    {
+                        AbsTile[newSmudge.X + l, newSmudge.Y + m].HasSmudge = true;
+                    }
+                }
+
+                currentDensity = (double)SmudgeList.Count / (double)((Width * 2 - 1) * Height);
+                loopTimes++;
+                if (loopTimes > (Width * 2 - 1) * Height * 10)
+                {
+                    Log.Warning("Random place smudge is forcefully stopped because of too many retries.");
+                    Log.Warning("Please make sure the density is not too high");
+                    break;
+                }    
             }
         }
     }

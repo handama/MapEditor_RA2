@@ -54,6 +54,9 @@ namespace RandomMapGenerator
 
         [Option('d' ,"damanged-building", Required = false, HelpText = "建筑物将会随机受损")]
         public bool DamangedBuilding { get; set; }
+
+        [Option('s', "smudge", Required = false, HelpText = "随机产生污染与弹坑（参数=生成密度，建议低于0.1。）")]
+        public double Smudge { get; set; }
     }
     class Program
     {
@@ -63,6 +66,8 @@ namespace RandomMapGenerator
         public static string GameFolder;
         public static string TemplateMap;
         public static string ProgramFolder;
+        public static string RulesPath;
+        public static string ArtPath;
 
         static void Main(string[] args)
         {
@@ -124,6 +129,8 @@ namespace RandomMapGenerator
 #endif
             GameFolder = settings.GetStringValue("GameFolder", ".").EndsWith("\\") ? settings.GetStringValue("GameFolder", ".") : settings.GetStringValue("GameFolder", ".") + "\\";
             TemplateMap = settings.GetStringValue("TemplateMap", "templateMap.map");
+            RulesPath = settings.GetStringValue("RulesPath", "rulesmd.ini");
+            ArtPath = settings.GetStringValue("ArtPath", "artmd.ini");
 
             var outputName = settings.GetStringValue("OutputName", "No Name");
             var outputExtension = settings.GetStringValue("OutputExtension", "yrm");
@@ -308,6 +315,10 @@ namespace RandomMapGenerator
                     WorkingMap.ChangeUnitAirInfHealth(damangeMin, damangeMax);
                 }
 
+                if (option.Smudge > 0)
+                {
+                    WorkingMap.RandomPlaceSmudge(option.Smudge); //not stable
+                }
 
                 mapFile.Width = WorkingMap.Width;
                 mapFile.Height = WorkingMap.Height;
