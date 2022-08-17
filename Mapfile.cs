@@ -346,7 +346,7 @@ namespace RandomMapGenerator
                 {
                     byte overlay_value = overlayDataPack[idx];
                     var ovl = new Overlay(overlay_id, overlay_value);
-                    ovl.Tile = tile;
+                    ovl.Tile = tile.Clone();
                     OverlayList.Add(ovl);
                 }
             }

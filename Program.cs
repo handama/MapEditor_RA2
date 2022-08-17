@@ -159,7 +159,7 @@ namespace RandomMapGenerator
                 {
                     fullPath = OutputFolder + outputName + (count + 1).ToString() + "." + outputExtension;
                     Console.WriteLine("Generating random map " + outputName + (count + 1).ToString() + "." + outputExtension + " ...");
-                    internalNameRandom = internalName + (count + 1).ToString();
+                    internalNameRandom = internalName + string.Format(" {0:D2}", count + 1);
                 }
                     
 

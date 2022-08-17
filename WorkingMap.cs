@@ -1840,13 +1840,25 @@ namespace RandomMapGenerator
             if (max > 256)
                 max = 256;
 
+            string[] TechBuildingList = new string[]
+            {
+                "CATHOSP",
+                "CAOILD",
+                "CAOUTP",
+                "CAMACH",
+                "CAPOWR",
+                "CASLAB",
+                "CAHOSP",
+                "CAAIRP"
+            };
+
             foreach (var structure in StructureList)
             {
                 if (structure.Name != "CABHUT")
                 {
                     structure.Strength = Randomizer.Next(min, max);
                     int destroyed = Randomizer.Next(100);
-                    if (destroyed < destroyPercentage)
+                    if (destroyed < destroyPercentage && !TechBuildingList.Contains(structure.Name))
                         structure.Strength = 0;
                 }
             }

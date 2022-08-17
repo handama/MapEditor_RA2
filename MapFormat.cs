@@ -1013,7 +1013,10 @@ namespace RandomMapGenerator
             ret.Add(0);//1 bytes
             return ret;
         }
-
+        public IsoTile Clone()
+        {
+            return (IsoTile)this.MemberwiseClone();
+        }
 
     }
     public class Format5
