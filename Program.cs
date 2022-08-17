@@ -312,7 +312,8 @@ namespace RandomMapGenerator
                     int damangeMax = r.Next(damangeMin + 10, 200);
                     int destroyP = (100 - damangeMin) / 10 - 2;
                     WorkingMap.ChangeStructureHealth(damangeMin, damangeMax, destroyP);
-                    WorkingMap.ChangeUnitAirInfHealth(damangeMin, damangeMax);
+                    //WorkingMap.ChangeUnitAirInfHealth(damangeMin, damangeMax); //this should not be used
+                    // because neutral units will go to neutral service depots
                 }
 
                 if (option.Smudge > 0)
