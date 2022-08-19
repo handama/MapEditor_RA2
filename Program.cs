@@ -59,6 +59,9 @@ namespace RandomMapGenerator
         [Option('t' ,"total-random", Required = false, HelpText = "完全随机的产生地图（参数=生成数量）")]
         public int TotalRandom { get; set; }
 
+        [Option("number", Required = false, HelpText = "生成地图的数量，不能与total-random共用")]
+        public int Number { get; set; }
+
         [Option('d' ,"damanged-building", Required = false, HelpText = "建筑物将会随机受损")]
         public bool DamangedBuilding { get; set; }
 
@@ -150,6 +153,9 @@ namespace RandomMapGenerator
             int count = 0;
 
             var r = new Random();
+
+            if (option.TotalRandom > 0 && option.Number > 0)
+                return;
             
             while (loop)
             {
@@ -158,7 +164,7 @@ namespace RandomMapGenerator
                 Log.Information("******************************************************");
                 string fullPath = "";
                 string internalNameRandom = "";
-                if (option.TotalRandom == 0)
+                if (option.TotalRandom == 0 && option.Number == 0)
                 {
                     if (option.Name != "")
                     {
@@ -354,7 +360,7 @@ namespace RandomMapGenerator
                 mapFile.CorrectPreviewSize(fullPath);
                 mapFile.CalculateStartingWaypoints(fullPath);
                 mapFile.RandomSetLighting(fullPath);
-                if (option.TotalRandom == 0)
+                if (option.TotalRandom == 0 && option.Number == 0)
                 {
                     mapFile.ChangeName(fullPath, internalName);
                 }
@@ -375,12 +381,12 @@ namespace RandomMapGenerator
 
                 mapFile.AddComment(fullPath);
 
-                if (option.TotalRandom == 0)
+                if (option.TotalRandom == 0 && option.Number == 0)
                     loop = false;
                 else
                 {
                     count++;
-                    if (count > option.TotalRandom - 1)
+                    if ((option.TotalRandom != 0 && count > option.TotalRandom - 1 )|| (option.Number != 0 && count > option.Number - 1))
                         break;
                 }
             }
