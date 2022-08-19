@@ -466,6 +466,11 @@ namespace RandomMapGenerator
                 playerNum++;
             }
             MapFile.SetStringValue("Header", "NumberStartingPoints", playerNum.ToString());
+            MapFile.SetStringValue("Basic", "MaxPlayer", playerNum.ToString());
+            if (playerNum == 1)
+                MapFile.SetStringValue("Basic", "MinPlayer", "1");
+            else if (playerNum == 0)
+                MapFile.SetStringValue("Basic", "MinPlayer", "0");
             MapFile.WriteIniFile();
         }
         public void CorrectPreviewSize(string filePath)
@@ -582,6 +587,22 @@ namespace RandomMapGenerator
             MapRenderer.Start();
             while (!MapRenderer.HasExited) { }
             Log.Information("Image is saved as " + outputName + ".png");
+            Log.Information("******************************************************");
+        }
+
+        public void GeneratePreview(string path)
+        {
+            path = Program.ProgramFolder + "\\" + path;
+            Log.Information("******************************************************");
+            Log.Information("Rendering Map...");
+            Process MapRenderer = new Process();
+            var outputName = path.Split('\\').Last().Split('.')[0];
+            MapRenderer.StartInfo.FileName = Program.RenderderPath;
+            MapRenderer.StartInfo.UseShellExecute = false;
+            MapRenderer.StartInfo.CreateNoWindow = true;
+            MapRenderer.StartInfo.Arguments = $@"-i ""{path}"" -m ""{Program.GameFolder.Trim('\\')}"" -r --mark-start-pos -s=4 --preview-markers-selected"; //"-i \"" + path + "\" -p -o \"" + outputName + "\" -m \"" + Program.GameFolder + "\" -r --mark-start-pos --preview-markers-selected";
+            MapRenderer.Start();
+            while (!MapRenderer.HasExited) { }
             Log.Information("******************************************************");
         }
     }

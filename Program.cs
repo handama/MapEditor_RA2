@@ -20,7 +20,11 @@ namespace RandomMapGenerator
         public int Width { get; set; }
 
         [Option('h', "height", Required = false, HelpText = "确定地图的高度")]
+
         public int Height { get; set; }
+
+        [Option('n', "name", Default = "", Required = false, HelpText = "设置地图的名称")]
+        public string Name { get; set; }
 
         [Option("nep", Required = false, HelpText = "在东北方向放置玩家（参数=数量）")]
         public int NE { get; set; }
@@ -49,6 +53,9 @@ namespace RandomMapGenerator
         [Option("no-thumbnail", Default = false ,Required = false, HelpText = "不渲染地图全图（同时不会生成载入缩略图）")]
         public bool NoThumbnail { get; set; }
 
+        [Option("no-thumbnail-output", Default = false, Required = false, HelpText = "不输出地图全图，但是会生成载入缩略图")]
+        public bool NoThumbnailOutput { get; set; }
+
         [Option('t' ,"total-random", Required = false, HelpText = "完全随机的产生地图（参数=生成数量）")]
         public int TotalRandom { get; set; }
 
@@ -57,6 +64,8 @@ namespace RandomMapGenerator
 
         [Option('s', "smudge", Required = false, HelpText = "随机产生污染与弹坑（参数=生成密度，建议低于0.1）")]
         public double Smudge { get; set; }
+
+
     }
     class Program
     {
@@ -151,6 +160,12 @@ namespace RandomMapGenerator
                 string internalNameRandom = "";
                 if (option.TotalRandom == 0)
                 {
+                    if (option.Name != "")
+                    {
+                        outputName = option.Name;
+                        internalName = option.Name;
+                    }
+                    
                     fullPath = OutputFolder + outputName + "." + outputExtension;
                     Console.WriteLine("Generating random map " + outputName + "." + outputExtension + " ...");
                 }
@@ -347,9 +362,17 @@ namespace RandomMapGenerator
                 {
                     mapFile.ChangeName(fullPath, internalNameRandom);
                 }
+                
+                if (option.NoThumbnailOutput)
+                {
+                    mapFile.GeneratePreview(fullPath);
+                    option.NoThumbnail = true;
+                }
 
                 if (!option.NoThumbnail)
                     mapFile.RenderMapAndGeneratePreview(fullPath);
+
+
                 mapFile.AddComment(fullPath);
 
                 if (option.TotalRandom == 0)
