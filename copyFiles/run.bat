@@ -1,1 +1,1 @@
-start ./RandomMapGenerator.exe -w 180 -h 160 --nwp 4 --sep 4 -d -s 0.03
+start ./RandomMapGenerator.exe -w 180 -h 160 --nwp 4 --sep 4 -d -s 0.03  --type TEMPERATE_Islands -g standard

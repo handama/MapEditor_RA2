@@ -26,6 +26,12 @@ namespace RandomMapGenerator
         [Option('n', "name", Default = "", Required = false, HelpText = "设置地图的名称")]
         public string Name { get; set; }
 
+        [Option("type", Required = true, HelpText = "指定地图的类型（WorkingFolder下的子文件夹）")]
+        public string Type { get; set; }
+
+        [Option('g', "gamemode", Required = false, HelpText = "指定地图的游戏类型")]
+        public string Gamemode { get; set; }
+
         [Option("nep", Required = false, HelpText = "在东北方向放置玩家（参数=数量）")]
         public int NE { get; set; }
 
@@ -117,6 +123,8 @@ namespace RandomMapGenerator
                 return;
             }
             Console.WriteLine("未能识别命令行参数！");
+            Console.ReadKey();
+            return;
         }
 
     
@@ -125,7 +133,17 @@ namespace RandomMapGenerator
             var mapFile = new MapFile();
 
             var settings = new IniFile("settings.ini").GetSection("settings");
-            WorkingFolder = settings.GetStringValue("WorkingFolder", ".").EndsWith("\\") ? settings.GetStringValue("WorkingFolder", ".") : settings.GetStringValue("WorkingFolder", ".") + "\\";
+            var workingFokderTemp = settings.GetStringValue("WorkingFolder", ".").EndsWith("\\") ? settings.GetStringValue("WorkingFolder", ".") : settings.GetStringValue("WorkingFolder", ".") + "\\";
+
+            WorkingFolder = (workingFokderTemp + option.Type).EndsWith("\\") ? workingFokderTemp + option.Type : workingFokderTemp + option.Type + "\\";
+            Console.WriteLine(WorkingFolder);
+            if (!Directory.Exists(WorkingFolder))
+            {
+                Console.WriteLine("指定的地图类型文件夹不存在！");
+                Console.ReadKey();
+                return;
+            }
+
             OutputFolder = settings.GetStringValue("OutputFolder", ".").EndsWith("\\") ? settings.GetStringValue("OutputFolder", ".") : settings.GetStringValue("OutputFolder", ".") + "\\";
             ProgramFolder = Environment.CurrentDirectory;
 
@@ -360,6 +378,9 @@ namespace RandomMapGenerator
                 mapFile.CorrectPreviewSize(fullPath);
                 mapFile.CalculateStartingWaypoints(fullPath);
                 mapFile.RandomSetLighting(fullPath);
+                mapFile.ChangeGamemode(fullPath, option.Gamemode);
+                mapFile.AddAdditionalINI(fullPath, WorkingFolder + "addition.ini");
+
                 if (option.TotalRandom == 0 && option.Number == 0)
                 {
                     mapFile.ChangeName(fullPath, internalName);

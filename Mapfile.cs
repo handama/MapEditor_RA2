@@ -360,6 +360,31 @@ namespace RandomMapGenerator
             saveFile.WriteIniFile();
         }
 
+        public void ChangeGamemode(string path, string modes)
+        {
+            if (modes == null || modes == "")
+                return;
+            var saveFile = new IniFile(path);
+            saveFile.SetStringValue("Basic", "GameMode", modes);
+            saveFile.WriteIniFile();
+        }
+
+        public void AddAdditionalINI(string path, string iniPath)
+        {
+            if (!File.Exists(iniPath))
+                return;
+
+            var saveFile = new IniFile(path);
+            var additional = new IniFile(iniPath);
+            var additionalSections = additional.GetSections();
+            foreach(var section in additionalSections)
+            {
+                var newSection = additional.GetSection(section);
+                saveFile.AddSection(newSection);
+            }
+            saveFile.WriteIniFile();
+        }
+
         public void SaveOverlay(string path)
         {
 

@@ -1,1 +1,1 @@
-start ./RandomMapGenerator.exe --total-random 10 -d -s 0.03
+start ./RandomMapGenerator.exe --total-random 10 -d -s 0.03  --type TEMPERATE_Islands -g standard

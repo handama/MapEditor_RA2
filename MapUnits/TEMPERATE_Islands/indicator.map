@@ -1,126 +1,30 @@
-[Header]
-Width=45
-Height=44
-StartX=233
-StartY=30
-NumberStartingPoints=0
+; Map created with FinalAlert 2(tm) Mission Editor
+; Get it at http://www.westwood.com
+; note that all comments were truncated
 
-; this is a hidden preview
+[Header]
+Width=-10000
+Height=-10000
+StartX=10000
+StartY=10000
+Waypoint1=256,1
+Waypoint2=257,1
+Waypoint3=256,2
+Waypoint4=257,2
+Waypoint5=256,2
+Waypoint6=257,2
+Waypoint7=257,2
+Waypoint8=258,2
+NumberStartingPoints=8
+
+[TerrainTypes]
+
+
 [Preview]
-Size=0,0,106,61
+Size=0,0,2,1
 
 [PreviewPack]
-2=BIACcgAEwBtAMnRABAAaQCSANMAVQASAAnIABMAbQDJ0QAQAGkAkgDTAFUAEgAJyAATAG0
-1=yAsAIAXQ5PDQ5PDQ6JQATAEE6PDQ4PDI4JgBTAFEAkgAJyAATAG0AydEAEABpAJIA0wBVA
-
-[AITriggerTypesEnable]
-0A31295C-G=yes
-0A44F17C-G=yes
-0A44F2CC-G=yes
-0A452C6C-G=yes
-0A452E5C-G=yes
-0AA845AC-G=yes
-0AA846FC-G=yes
-0AD2BAEC-G=yes
-0C0C7AEC-G=yes
-0C0D184C-G=yes
-0C0D251C-G=yes
-0C1245AC-G=yes
-0C1246FC-G=yes
-0C32599C-G=yes
-0C32D84C-G=yes
-0C87B45C-G=yes
-0C87B99C-G=yes
-0C87E5AC-G=yes
-0C8B81BC-G=yes
-0C8BC5AC-G=yes
-0C8C2AEC-G=yes
-0C8C2C3C-G=yes
-0C8C430C-G=yes
-0C8C4C3C-G=yes
-0C8C51BC-G=yes
-0C8C56FC-G=yes
-0C8C645C-G=yes
-0C8C6EDC-G=yes
-0C8C71BC-G=yes
-0C8E2C3C-G=yes
-0C8EE1BC-G=yes
-0C8EEAEC-G=yes
-0C8EEEDC-G=yes
-0C91D45C-G=yes
-0C92C1BC-G=yes
-0C92C45C-G=yes
-0C955AEC-G=yes
-0C955C3C-G=yes
-0C9561BC-G=yes
-0C9565AC-G=yes
-0C96F45C-G=yes
-0C96F5AC-G=yes
-0CA1F84C-G=yes
-0CA24D8C-G=yes
-0CA2A04C-G=yes
-0CA2B06C-G=yes
-0CA2D99C-G=yes
-0CA2FEDC-G=yes
-0CA5945C-G=yes
-0CA6621C-G=yes
-0CA6AEDC-G=yes
-0CAD0B2C-G=yes
-0CAD0C7C-G=yes
-0CAD0DCC-G=yes
-0CAD130C-G=yes
-0CAD145C-G=yes
-0CAD25AC-G=yes
-0CAD2AEC-G=yes
-0CAD2C3C-G=yes
-0CAD5AEC-G=yes
-0CADD99C-G=yes
-0CADDEDC-G=yes
-0CB29EDC-G=yes
-0CB2CEDC-G=yes
-0CDF899C-G=yes
-0CDF8D8C-G=yes
-0CDF8EDC-G=yes
-0CE2395C-G=yes
-0CE23AAC-G=yes
-0CE26B5C-G=yes
-0CE26CAC-G=yes
-0CE2E8DC-G=yes
-0CE2EA2C-G=yes
-0CE44D0C-G=yes
-0D022B1C-G=yes
-0D022C6C-G=yes
-0D052AEC-G=yes
-0D0803CC-G=yes
-0D08461C-G=yes
-0D0848BC-G=yes
-0D084A0C-G=yes
-0D084B5C-G=yes
-0D0873DC-G=yes
-0D087D8C-G=yes
-0D0B3B9C-G=yes
-0D2769BC-G=yes
-0D2C41EC-G=yes
-0D2C448C-G=yes
-0D2C45DC-G=yes
-0D53099C-G=yes
-0D53130C-G=yes
-0D53430C-G=yes
-0D535EDC-G=yes
-0D62145C-G=yes
-0D6215AC-G=yes
-0D6216FC-G=yes
-0D62199C-G=yes
-0ECCB2BC-G=yes
-0ECCB40C-G=yes
-0ECCB55C-G=yes
-0ECCB7FC-G=yes
-0ECCBC3C-G=yes
-0ECCF14C-G=yes
-0ECCF29C-G=yes
-0ECCF68C-G=yes
-0ECCFA7C-G=yes
-0ECCFCAC-G=yes
+1=CgAGABf/AAD/AAARAAA=
 
 [Africans]
 IQ=0
@@ -171,8 +75,7 @@ PercentBuilt=0
 PlayerControl=no
 
 [Basic]
-Name=Random Map
-Author=Handama
+Name=No name
 Percent=0
 GameMode=standard
 HomeCell=98
@@ -278,6 +181,9 @@ PlayerControl=no
 12=Neutral
 13=Special
 
+[IsoMapPack5]
+1=DwALABwBAAEAwwEAAAAAABEAAA==
+
 [Lighting]
 Red=1.000000
 Blue=1.000000
@@ -300,9 +206,9 @@ DominatorAmbient=1.500000
 DominatorAmbientChangeRate=0.009000
 
 [Map]
-Size=0,0,50,50
+Size=0,0,1,1
 Theater=TEMPERATE
-LocalSize=2,4,46,44
+LocalSize=3,5,-5,-10
 
 [Neutral]
 IQ=0
@@ -385,6 +291,18 @@ DestroyableBridges=yes
 
 [Tags]
 
+[Units]
+
+[Waypoints]
+0=1001
+1=0002
+2=1002
+3=0003
+4=1002
+5=0003
+6=1003
+7=0004
+
 [YuriCountry]
 IQ=0
 Edge=North
@@ -397,6 +315,8 @@ TechLevel=1
 PercentBuilt=0
 PlayerControl=no
 
+
+
 [Digest]
-1=VaVP2kwM6ecv02+eW//z1v4ZvEg=
+1=UGub24JNXBh3mwwXCAa6QhJjliQ=
 

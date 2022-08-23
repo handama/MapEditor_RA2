@@ -56,18 +56,21 @@ namespace RandomMapGenerator
             indicatorMap.CreateIsoTileList(Path + "indicator.map");
             IndicatorNum = indicatorMap.IsoTileList[0].TileNum;
 
-            var smudgeMap = new MapFile();
-            smudgeMap.CreateIsoTileList(Path + "cannotplacesmudge.map");
-
-            foreach (var tile in smudgeMap.IsoTileList)
+            if (File.Exists(Path + "cannotplacesmudge.map"))
             {
-                if (tile.TileNum != 0 && tile.TileNum != -1)
-                {
+                var smudgeMap = new MapFile();
+                smudgeMap.CreateIsoTileList(Path + "cannotplacesmudge.map");
 
-                    var absTileType = new AbstractTileType();
-                    absTileType.TileNum = tile.TileNum;
-                    absTileType.SubTile = tile.SubTile;
-                    CannotPlaceSmudgeList.Add(absTileType);
+                foreach (var tile in smudgeMap.IsoTileList)
+                {
+                    if (tile.TileNum != 0 && tile.TileNum != -1)
+                    {
+
+                        var absTileType = new AbstractTileType();
+                        absTileType.TileNum = tile.TileNum;
+                        absTileType.SubTile = tile.SubTile;
+                        CannotPlaceSmudgeList.Add(absTileType);
+                    }
                 }
             }
 
@@ -134,6 +137,9 @@ namespace RandomMapGenerator
                         break;
                     case Theater.SNOW:
                         MapTheater = (int)Theater.SNOW;
+                        break;
+                    default:
+                        MapTheater = (int)Theater.TEMPERATE;
                         break;
                 }
             }
@@ -2046,6 +2052,14 @@ namespace RandomMapGenerator
                 int x = Randomizer.Next(0, range);
                 int y = Randomizer.Next(0, range);
 
+                loopTimes++;
+                if (loopTimes > (Width * 2 - 1) * Height * 10)
+                {
+                    Log.Warning("Random place smudge is forcefully stopped because of too many retries.");
+                    Log.Warning("Please make sure the density is not too high");
+                    break;
+                }
+
                 if (!AbsTile[x, y].IsOnMap)
                     continue;
 
@@ -2068,14 +2082,7 @@ namespace RandomMapGenerator
                     }
                 }
 
-                currentDensity = (double)SmudgeList.Count / (double)((Width * 2 - 1) * Height);
-                loopTimes++;
-                if (loopTimes > (Width * 2 - 1) * Height * 10)
-                {
-                    Log.Warning("Random place smudge is forcefully stopped because of too many retries.");
-                    Log.Warning("Please make sure the density is not too high");
-                    break;
-                }    
+                currentDensity = (double)SmudgeList.Count / (double)((Width * 2 - 1) * Height);   
             }
         }
     }
