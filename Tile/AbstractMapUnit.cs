@@ -54,7 +54,14 @@ namespace RandomMapGenerator.TileInfo
                     {
                         if (tile.Rx == i + WorkingMap.StartingX && tile.Ry == j + WorkingMap.StartingY)
                         {
-                            MapUnitName = file.Name.Trim((file.Extension).ToCharArray());
+                            string name = "";
+                            for (int k = 0; k < file.Name.Split('.').Count() - 1; k ++)
+                            {
+                                name += file.Name.Split('.')[k];
+                                if (k != file.Name.Split('.').Count() - 2)
+                                    name += ".";
+                            }
+                            MapUnitName = name;
                             absTileType.TileNum = tile.TileNum;
                             absTileType.SubTile = tile.SubTile;
                             absTileType.Z = tile.Z;

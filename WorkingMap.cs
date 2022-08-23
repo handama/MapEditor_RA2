@@ -1078,6 +1078,7 @@ namespace RandomMapGenerator
                         if (nearbyUnitMap[0].MapUnitName == name)
                         {
                             validMapUnitList.RemoveAt(i);
+                            validCount--;
                             continue;
                         }
                     }
@@ -1086,6 +1087,7 @@ namespace RandomMapGenerator
                         if (nearbyUnitMap[1].MapUnitName == name)
                         {
                             validMapUnitList.RemoveAt(i);
+                            validCount--;
                             continue;
                         }
                     }
@@ -1094,6 +1096,7 @@ namespace RandomMapGenerator
                         if (nearbyUnitMap[2].MapUnitName == name)
                         {
                             validMapUnitList.RemoveAt(i);
+                            validCount--;
                             continue;
                         }
                     }
@@ -1102,6 +1105,7 @@ namespace RandomMapGenerator
                         if (nearbyUnitMap[3].MapUnitName == name)
                         {
                             validMapUnitList.RemoveAt(i);
+                            validCount--;
                             continue;
                         }
                     }
