@@ -1297,7 +1297,7 @@ namespace RandomMapGenerator
                 {
                     for (int j = AbstractMapMemberMatrix.GetLength(0) - 1; j >= 0; j--)
                     {
-                        if (IsValidAUM(j, i) && IsValidAUM(j + length - 1, i))
+                        if (IsValidAUM(j, i) && IsValidAUM(j - length + 1, i))
                         {
                             if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j - length + 1, i].IsAllOnVisibleMap)
                             {
@@ -1335,7 +1335,7 @@ namespace RandomMapGenerator
                 {
                     for (int j = AbstractMapMemberMatrix.GetLength(1) - 1; j >= 0; j--)
                     {
-                        if (IsValidAUM(i, j) && IsValidAUM(i, j + length - 1))
+                        if (IsValidAUM(i, j) && IsValidAUM(i, j - length + 1))
                         {
                             if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j - length + 1].IsAllOnVisibleMap)
                             {
