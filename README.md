@@ -1,9 +1,14 @@
 # RandomMapGenerator_RA2 #
 How to use
 -------
-目前可以通过预制的地形块随机生成地图，示例可见MapUnits\NEWURBAN
+- download release or clone & build
+- change game folder in settings.ini
+- click run.bat to create random map
+- click help.bat to see additional command lines
+- examples of map units can be seen in /MapUnits
 ![map](使用方法.png)
 ![map](thumb_map.jpg)
+![map](islands_map.jpg)
 
 
 Acknowledgments
