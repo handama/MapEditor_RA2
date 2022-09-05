@@ -686,6 +686,13 @@ namespace RandomMapGenerator
                     }
                 }
 
+                for (int i = validMapUnitList.Count() - 1; i >= 0; i--)
+                {
+                    //spawn and tiberium cannot be included into normal lists.
+                    if (validMapUnitList[i].MapUnitName.Contains("spawn") || validMapUnitList[i].MapUnitName.Contains("tiberium"))
+                        validMapUnitList.RemoveAt(i);
+                }
+
                 //check after placing some MU, its nearby MUs have options or not.
                 var nearbyAbsMapMemberOfNE = GetNearbyAbstractMapMemberInfo(targetMapUnit[0], targetMapUnit[1] - 1);
                 var nearbyAbsMapMemberOfNW = GetNearbyAbstractMapMemberInfo(targetMapUnit[0] - 1, targetMapUnit[1]);

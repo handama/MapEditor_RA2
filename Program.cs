@@ -98,8 +98,8 @@ namespace RandomMapGenerator
                 return;
             }
 
-            Log.Logger = new LoggerConfiguration().WriteTo.File(@".\log\"+"log-.txt", rollingInterval: RollingInterval.Minute).CreateLogger();
-           
+            Log.Logger = new LoggerConfiguration().WriteTo.File(@".\log\"+"log-.txt", rollingInterval: RollingInterval.Minute).CreateLogger(); //.MinimumLevel.Warning()
+
 
             var result = Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(RunOptions)
