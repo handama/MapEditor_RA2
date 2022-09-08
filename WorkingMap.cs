@@ -8,6 +8,7 @@ using System.IO;
 using Weighted_Randomizer;
 using RandomMapGenerator.NonTileObjects;
 using Serilog;
+using System.Drawing;
 
 namespace RandomMapGenerator
 {
@@ -288,6 +289,14 @@ namespace RandomMapGenerator
 
         public static void PlaceMapUnitToWorkingMap(int x, int y, string mapUnitName)
         {
+            foreach (var mapUnit in AbstractMapUnitList)
+            {
+                if (mapUnit.MapUnitName == mapUnitName)
+                {
+                    mapUnit.UseTimes++;
+                    break;
+                }
+            }
             var absMapUnit = GetAbstractMapUnitByName(mapUnitName);
             AbstractMapMemberMatrix[x, y].Placed = true;
 
@@ -344,6 +353,10 @@ namespace RandomMapGenerator
                                         for (int m = 0; m < GetStructureSize(newStructure.Name)[1]; m++)
                                         {
                                             AbsTile[newStructure.X + l, newStructure.Y + m].HasStructure = true;
+                                            if (IsNeuralTechBuilding(newStructure.Name))
+                                            {
+                                                AbsTile[newStructure.X + l, newStructure.Y + m].HasNeuralTechStructure = true;
+                                            }
                                         }
                                     }
                                 }
@@ -412,6 +425,7 @@ namespace RandomMapGenerator
                                         TerrainList.Add(newTerrain);
                                         Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
                                         AbsTile[newTerrain.X, newTerrain.Y].HasTerrain = true;
+                                        AbsTile[newTerrain.X, newTerrain.Y].TerrainName = newTerrain.Name;
                                     }
                                     else
                                         Log.Warning("Cannot place terrain [{0}] in [{1},{2}] because it is blocked", newTerrain.Name, newTerrain.X, newTerrain.Y);
@@ -423,6 +437,7 @@ namespace RandomMapGenerator
                                         TerrainList.Add(newTerrain);
                                         Log.Information("Add terrain [{0}] in [{1},{2}]", newTerrain.Name, newTerrain.X, newTerrain.Y);
                                         AbsTile[newTerrain.X, newTerrain.Y].HasTerrain = true;
+                                        AbsTile[newTerrain.X, newTerrain.Y].TerrainName = newTerrain.Name;
                                     }
                                     else
                                         Log.Warning("Cannot place terrain [{0}] in [{1},{2}] because it is blocked", newTerrain.Name, newTerrain.X, newTerrain.Y);
@@ -510,6 +525,8 @@ namespace RandomMapGenerator
                                     OverlayList.Add(newOverlay);
                                     Log.Information("Add overlay [{0},{1}] in [{2},{3}]", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);
                                     AbsTile[newOverlay.Tile.Rx, newOverlay.Tile.Ry].HasOverlay = true;
+                                    AbsTile[newOverlay.Tile.Rx, newOverlay.Tile.Ry].OverlayID = (int)newOverlay.OverlayID;
+                                    AbsTile[newOverlay.Tile.Rx, newOverlay.Tile.Ry].OverlayValue = (int)newOverlay.OverlayValue;
                                 }
                                 else
                                     Log.Warning("Cannot place overlay [{0},{1}] in [{2},{3}] because it is blocked", newOverlay.OverlayID, newOverlay.OverlayValue, newOverlay.Tile.Rx, newOverlay.Tile.Ry);
@@ -536,6 +553,16 @@ namespace RandomMapGenerator
                 }
             }
             CreateNonTileObjectLists();
+        }
+        public static void CountMapUnitUsage()
+        {
+            Log.Information("******************************************************");
+            Log.Information("Map units usage statistics:");
+            foreach (var mapUnit in AbstractMapUnitList)
+            {
+                Log.Information($"{mapUnit.MapUnitName}: {mapUnit.UseTimes}");
+            }
+            Log.Information("******************************************************");
         }
         public static void SetMapUnit(int x, int y, string mapUnitName)
         {
@@ -1356,11 +1383,93 @@ namespace RandomMapGenerator
             }
             return result;
         }
+        public static void ReadyForMiniMap()
+        {
+            for (int k = 0; k < WaypointList.Count; k++)
+            {
+                if (k > 7)
+                    break;
+
+                var waypoint = WaypointList[k];
+
+                AbsTile[waypoint.X, waypoint.Y].AroundPlayerLocation = true;
+                AbsTile[waypoint.X + 1, waypoint.Y + 1].AroundPlayerLocation = true;
+                AbsTile[waypoint.X - 1, waypoint.Y - 1].AroundPlayerLocation = true;
+                AbsTile[waypoint.X + 1, waypoint.Y - 1].AroundPlayerLocation = true;
+                AbsTile[waypoint.X - 1, waypoint.Y + 1].AroundPlayerLocation = true;
+                AbsTile[waypoint.X + 1, waypoint.Y].AroundPlayerLocation = true;
+                AbsTile[waypoint.X - 1, waypoint.Y].AroundPlayerLocation = true;
+                AbsTile[waypoint.X, waypoint.Y - 1].AroundPlayerLocation = true;
+                AbsTile[waypoint.X, waypoint.Y + 1].AroundPlayerLocation = true;
+            }
+
+            for (int k = 0; k < OverlayList.Count; k++)
+            {
+                var overlay = OverlayList[k];
+                var x = overlay.Tile.Rx;
+                var y = overlay.Tile.Ry;
+
+
+                if (overlay.OverlayID >= 74 && overlay.OverlayID <= 82
+                    || overlay.OverlayID >= 92 && overlay.OverlayID <= 94
+                    || overlay.OverlayID >= 205 && overlay.OverlayID <= 213
+                    || overlay.OverlayID >= 223 && overlay.OverlayID <= 226
+                    || overlay.OverlayID >= 233 && overlay.OverlayID <= 234) // low bridge NW-SE
+                {
+                    if (overlay.OverlayValue == 1)
+                    {
+                        AbsTile[x, y].HasBridge = true;
+                        AbsTile[x, y + 1].HasBridge = true;
+                        AbsTile[x, y - 1].HasBridge = true;
+                    }
+                }
+                else if (overlay.OverlayID >= 83 && overlay.OverlayID <= 91
+                    || overlay.OverlayID >= 96 && overlay.OverlayID <= 99
+                    || overlay.OverlayID >= 214 && overlay.OverlayID <= 222
+                    || overlay.OverlayID >= 227 && overlay.OverlayID <= 230
+                    || overlay.OverlayID >= 235 && overlay.OverlayID <= 236) // low bridge SW-NE
+                {
+                    if (overlay.OverlayValue == 1)
+                    {
+                        AbsTile[x, y].HasBridge = true;
+                        AbsTile[x + 1, y].HasBridge = true;
+                        AbsTile[x - 1, y].HasBridge = true;
+                    }
+                }
+                else if (overlay.OverlayID == 24 || overlay.OverlayID == 25 || overlay.OverlayID == 237 || overlay.OverlayID == 238) // High bridge
+                { 
+                    if (overlay.OverlayValue >= 0 && overlay.OverlayValue <= 8) //NW-SE
+                    {
+                        AbsTile[x, y].HasBridge = true;
+                        AbsTile[x, y + 1].HasBridge = true;
+                        AbsTile[x, y - 1].HasBridge = true;
+                    }
+                    else if (overlay.OverlayValue >= 9 && overlay.OverlayValue <= 17) //NE-SW
+                    {
+                        AbsTile[x, y].HasBridge = true;
+                        AbsTile[x + 1, y].HasBridge = true;
+                        AbsTile[x - 1, y].HasBridge = true;
+                    }
+                }
+            }
+        }
+        public static int SafeColorInt(int x)
+        {
+            if (x > 255)
+                x = 255;
+            if (x < 0)
+                x = 0;
+            return x;
+        }
 
         public static List<IsoTile> CreateTileList()
         {
             var tileList = new List<IsoTile>();
             int range = Width + Height;
+
+            var minimapIni = new IniFile("minimap.ini");
+            var section = minimapIni.GetSection(((Theater)MapTheater).ToString());
+
             for (int y = 0; y < range; y++)
             {
                 for (int x = 0; x < range; x++)
@@ -1368,13 +1477,98 @@ namespace RandomMapGenerator
                     var absTile = AbsTile[x, y];
                     if (absTile.IsOnMap)
                     {
-                        var tile = new IsoTile((ushort)(2 * absTile.X - 2 - absTile.Y),
+                        var tile = new IsoTile((ushort)(absTile.X - absTile.Y + Width - 1),
                             (ushort)(absTile.X + absTile.Y - Width - 1),
                             (ushort)absTile.X,
                             (ushort)absTile.Y,
                             (byte)absTile.Z,
                             (short)absTile.TileNum,
                             (byte)absTile.SubTile);
+
+                        var value = section.GetStringValue(absTile.TileNum.ToString(), "255,255,255,255,255,255");
+                        var colorcombos = value.Split('/');
+                        int index = absTile.SubTile;
+                        if (index > colorcombos.Count())
+                            index = 0;
+                        var colorcombo = colorcombos[index];
+                        var rgbs = colorcombo.Split(',');
+                        tile.RadarLeft = Color.FromArgb(SafeColorInt(int.Parse(rgbs[0])), SafeColorInt(int.Parse(rgbs[1])), SafeColorInt(int.Parse(rgbs[2])));
+                        tile.RadarRight = Color.FromArgb(SafeColorInt(int.Parse(rgbs[3])), SafeColorInt(int.Parse(rgbs[4])), SafeColorInt(int.Parse(rgbs[5])));
+
+
+                        if (absTile.HasOverlay)
+                        {
+                            if (absTile.OverlayID >= 27 && absTile.OverlayID <= 38) //gems
+                            {
+                                tile.RadarLeft = Color.FromArgb(132, 0, 132);
+                                tile.RadarRight = Color.FromArgb(132, 0, 132);
+                            }
+                            else if (absTile.OverlayID >= 102 && absTile.OverlayID <= 166) //ores
+                            {
+                                tile.RadarLeft = Color.FromArgb(220, 217, 0);
+                                tile.RadarRight = Color.FromArgb(220, 217, 0);
+                            }
+                            else
+                            {
+                                tile.RadarLeft = Color.FromArgb(91, 91, 93);
+                                tile.RadarRight = Color.FromArgb(91, 91, 93);
+                            }
+                            if (absTile.OverlayID == 100 || absTile.OverlayID == 101 || absTile.OverlayID == 231 || absTile.OverlayID == 231) //broken bridge
+                            {
+                                tile.RadarLeft = Color.FromArgb(SafeColorInt(int.Parse(rgbs[0])), SafeColorInt(int.Parse(rgbs[1])), SafeColorInt(int.Parse(rgbs[2])));
+                                tile.RadarRight = Color.FromArgb(SafeColorInt(int.Parse(rgbs[3])), SafeColorInt(int.Parse(rgbs[4])), SafeColorInt(int.Parse(rgbs[5])));
+                            }
+                        }
+                        if (absTile.HasBridge)
+                        {
+                            tile.RadarLeft = Color.FromArgb(107, 109, 107);
+                            tile.RadarRight = Color.FromArgb(107, 109, 107);
+                        }
+                        if (absTile.HasTerrain)
+                        {
+                            if (absTile.TerrainName.Contains("TREE"))
+                            {
+                                tile.RadarLeft = Color.FromArgb(0, 194, 0);
+                                tile.RadarRight = Color.FromArgb(0, 194, 0);
+                            }
+                            else if (absTile.TerrainName.Contains("TIBTRE"))
+                            {
+                                tile.RadarLeft = Color.FromArgb(10, 10, 10);
+                                tile.RadarRight = Color.FromArgb(10, 10, 10);
+                            }
+                            else
+                            {
+                                tile.RadarLeft = Color.FromArgb(69, 68, 69);
+                                tile.RadarRight = Color.FromArgb(69, 68, 69);
+                            }
+                        }
+                        if (absTile.HasStructure || absTile.HasInfantry || absTile.HasUnit || absTile.HasAircraft)
+                        {
+                            tile.RadarLeft = Color.FromArgb(123, 125, 123);
+                            tile.RadarRight = Color.FromArgb(123, 125, 123);
+                        }
+                        if (absTile.HasNeuralTechStructure)
+                        {
+                            tile.RadarLeft = Color.FromArgb(215, 215, 215);
+                            tile.RadarRight = Color.FromArgb(215, 215, 215);
+                        }
+                        if (absTile.AroundPlayerLocation)
+                        {
+                            tile.RadarLeft = Color.FromArgb(220, 0, 0);
+                            tile.RadarRight = Color.FromArgb(220, 0, 0);
+                        }
+
+                        if (absTile.Z <= 10)
+                        {
+                            tile.RadarLeft = Color.FromArgb(SafeColorInt(tile.RadarLeft.R + absTile.Z * 2 - 1), SafeColorInt(tile.RadarLeft.G + absTile.Z * 2 - 1), SafeColorInt(tile.RadarLeft.B + absTile.Z * 2 - 1));
+                            tile.RadarRight = Color.FromArgb(SafeColorInt(tile.RadarLeft.R + absTile.Z * 2 - 1), SafeColorInt(tile.RadarLeft.G + absTile.Z * 2 - 1), SafeColorInt(tile.RadarLeft.B + absTile.Z * 2 - 1));
+                        }
+                        else
+                        {
+                            tile.RadarLeft = Color.FromArgb(SafeColorInt(tile.RadarLeft.R + (int)(absTile.Z * 2.5) - 1), SafeColorInt(tile.RadarLeft.G + (int)(absTile.Z * 2.5) - 1), SafeColorInt(tile.RadarLeft.B + (int)(absTile.Z * 2.5) - 1));
+                            tile.RadarRight = Color.FromArgb(SafeColorInt(tile.RadarLeft.R + (int)(absTile.Z * 2.5) - 1), SafeColorInt(tile.RadarLeft.G + (int)(absTile.Z * 2.5) - 1), SafeColorInt(tile.RadarLeft.B + (int)(absTile.Z * 2.5) - 1));
+                        }
+
                         tileList.Add(tile);
                     }
                 }
@@ -1848,6 +2042,24 @@ namespace RandomMapGenerator
                     }
                 }
             }
+        }
+        public static bool IsNeuralTechBuilding(string name)
+        {
+            string[] TechBuildingList = new string[]
+            {
+                "CATHOSP",
+                "CAOILD",
+                "CAOUTP",
+                "CAMACH",
+                "CAPOWR",
+                "CASLAB",
+                "CAHOSP",
+                "CAAIRP"
+            };
+            if (TechBuildingList.Contains(name))
+                return true;
+            else
+                return false;
         }
 
         public static void ChangeStructureHealth(int min, int max, int destroyPercentage = 0)

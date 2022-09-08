@@ -20,7 +20,9 @@ namespace RandomMapGenerator.TileInfo
         public int SWConnectionType = -1;
         public int SEConnectionType = -1;
         public int Weight = 0;
-        
+
+        public int UseTimes { get; set; }
+
         public List<Unit> UnitList { get; private set; }
         public List<Infantry> InfantryList { get; private set; }
         public List<Structure> StructureList { get; private set; }
@@ -40,7 +42,8 @@ namespace RandomMapGenerator.TileInfo
             SmudgeList = new List<Smudge>();
             OverlayList = new List<Overlay>();
             WaypointList = new List<Waypoint>();
-            
+            UseTimes = 0;
+
             var map = new MapFile();
             map.CreateIsoTileList(file.FullName);
             var overlayList = map.ReadOverlay(file.FullName);

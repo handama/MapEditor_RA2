@@ -29,6 +29,7 @@ namespace RandomMapGenerator
         public IniSection Aircraft = new IniSection("Aircraft");
         public IniSection Smudge = new IniSection("Smudge");
         public IniSection Waypoint = new IniSection("Waypoints");
+        public int[] LocalSize = new int[2];
         public void CreateIsoTileList(string filePath)
         {
             var MapFile = new IniFile(filePath);
@@ -242,11 +243,94 @@ namespace RandomMapGenerator
             }
         }
 
+        public void CreateBitMapbyMap(string filename)
+        {
+            var srcBitmap = new Bitmap(Width * 2, Height);
+
+            foreach (var tile in IsoTileList)
+            {
+                int x = tile.Dx ;
+                int y = (tile.Dy - tile.Dx % 2) / 2;
+                if (x < srcBitmap.Width && y < srcBitmap.Height)
+                    srcBitmap.SetPixel(x, y, tile.RadarLeft);
+            }
+            for (int i = 0; i < srcBitmap.Height; i++)
+            {
+                var color = srcBitmap.GetPixel(srcBitmap.Width - 2, i);
+                srcBitmap.SetPixel(srcBitmap.Width - 1, i, color);
+            }
+
+            var outputBitmap = new Bitmap(LocalSize[0] * 2, LocalSize[1]);
+            for ( int i = 2; i < 2 + outputBitmap.Width; i++ )
+            {
+                for (int j = 5; j < 5 + outputBitmap.Height; j++)
+                {
+                    outputBitmap.SetPixel(i - 2, j - 5, srcBitmap.GetPixel(i, j+1));
+                }
+            }
+            InjectThumb(outputBitmap, filename);
+            //outputBitmap.Save(filename + ".bmp");
+        }
+
+        public static unsafe void InjectThumb(Bitmap preview, string path)
+        {
+            BitmapData bmd = preview.LockBits(new Rectangle(0, 0, preview.Width, preview.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+            byte[] image = new byte[preview.Width * preview.Height * 3];
+            int idx = 0;
+
+            // invert rgb->bgr
+            for (int y = 0; y < bmd.Height; y++)
+            {
+                byte* p = (byte*)bmd.Scan0 + bmd.Stride * y;
+                for (int x = 0; x < bmd.Width; x++)
+                {
+                    byte r = *p++;
+                    byte g = *p++;
+                    byte b = *p++;
+
+                    image[idx++] = b;
+                    image[idx++] = g;
+                    image[idx++] = r;
+                }
+            }
+
+            // encode
+            byte[] image_compressed = Format5.Encode(image, 5);
+
+            // base64 encode
+            string image_base64 = Convert.ToBase64String(image_compressed, Base64FormattingOptions.None);
+
+            var map = new IniFile(path);
+            // now overwrite [Preview] and [PreviewPack], inserting them directly after [Basic] if not yet existing
+            map.SetStringValue("Preview","Size", string.Format("0,0,{0},{1}", preview.Width, preview.Height));
+
+            if (map.SectionExists("PreviewPack"))
+                map.RemoveSection("PreviewPack");
+
+            map.AddSection("PreviewPack");
+            var section = map.GetSection("PreviewPack");
+
+            int rowNum = 1;
+            for (int i = 0; i < image_base64.Length; i += 70)
+            {
+                section.SetStringValue(rowNum++.ToString(CultureInfo.InvariantCulture), image_base64.Substring(i, Math.Min(70, image_base64.Length - i)));
+            }
+            map.MoveSectionToFirst("PreviewPack");
+            map.MoveSectionToFirst("Preview");
+            map.MoveSectionToFirst("Header");
+            map.WriteIniFile();
+        }
+
+
         public void SaveFullMap(string path)
         {
             var fullMap = new IniFile(Program.TemplateMap);
+            var settings = new IniFile(Program.WorkingFolder + "settings.ini");
+            var bottomSpace = settings.GetIntValue("settings", "BottomSpace", 4);
             fullMap.SetStringValue("Map", "Size", "0,0," + Width.ToString() + "," + Height.ToString());
-            fullMap.SetStringValue("Map", "LocalSize", "2,5," + (Width - 4).ToString() + "," + (Height - 11).ToString());
+            LocalSize[0] = Width - 4;
+            LocalSize[1] = Height - 11 + 4 - bottomSpace;
+            fullMap.SetStringValue("Map", "LocalSize", "2,5," + LocalSize[0].ToString() + "," + LocalSize[1].ToString());
             fullMap.SetStringValue("Map", "Theater", Enum.GetName(typeof(Theater), MapTheater));
             if (Unit != null)
                 fullMap.AddSection(Unit);
@@ -518,21 +602,63 @@ namespace RandomMapGenerator
         public void RandomSetLighting(string filePath)
         {
             var MapFile = new IniFile(filePath);
+            var settings = new IniFile(Program.WorkingFolder + "settings.ini");
+
+            var Red = settings.GetStringValue("settings", "Red", "9000,10600");
+            var Red1 = int.Parse(Red.Split(',')[0]);
+            var Red2 = int.Parse(Red.Split(',')[1]);
+
+            var Green = settings.GetStringValue("settings", "Green", "8900,10100");
+            var Green1 = int.Parse(Green.Split(',')[0]);
+            var Green2 = int.Parse(Green.Split(',')[1]);
+
+            var Blue = settings.GetStringValue("settings", "Blue", "9000,10600");
+            var Blue1 = int.Parse(Blue.Split(',')[0]);
+            var Blue2 = int.Parse(Blue.Split(',')[1]);
+
+            var Level = settings.GetStringValue("settings", "Level", "120,320");
+            var Level1 = int.Parse(Level.Split(',')[0]);
+            var Level2 = int.Parse(Level.Split(',')[1]);
+
+            var Ambient = settings.GetStringValue("settings", "Ambient", "8500,10600");
+            var Ambient1 = int.Parse(Ambient.Split(',')[0]);
+            var Ambient2 = int.Parse(Ambient.Split(',')[1]);
+
+            var IonRed = settings.GetStringValue("settings", "IonRed", "7000,8500");
+            var IonRed1 = int.Parse(IonRed.Split(',')[0]);
+            var IonRed2 = int.Parse(IonRed.Split(',')[1]);
+
+            var IonGreen = settings.GetStringValue("settings", "IonGreen", "7500,8800");
+            var IonGreen1 = int.Parse(IonGreen.Split(',')[0]);
+            var IonGreen2 = int.Parse(IonGreen.Split(',')[1]);
+
+            var IonBlue = settings.GetStringValue("settings", "IonBlue", "9800,12000");
+            var IonBlue1 = int.Parse(IonBlue.Split(',')[0]);
+            var IonBlue2 = int.Parse(IonBlue.Split(',')[1]);
+
+            var IonLevel = settings.GetStringValue("settings", "IonLevel", "120,320");
+            var IonLevel1 = int.Parse(IonLevel.Split(',')[0]);
+            var IonLevel2 = int.Parse(IonLevel.Split(',')[1]);
+
+            var IonAmbient = settings.GetStringValue("settings", "IonAmbient", "3000,6000");
+            var IonAmbient1 = int.Parse(IonAmbient.Split(',')[0]);
+            var IonAmbient2 = int.Parse(IonAmbient.Split(',')[1]);
+
             var lighting = MapFile.GetSection("Lighting");
             var r = new Random();
-            double ambient = (double)r.Next(7000,10600) / 10000.0;
-            if (r.Next(1, 1000) > 380)
-                ambient = (double)r.Next(8500, 10600) / 10000.0;
-            double level = (double)r.Next(120, 320) / 10000.0;
-            double red = (double)r.Next(9001, 10601) / 10000.0;
-            double green = (double)r.Next(8900, 10100) / 10000.0;
-            double blue = (double)r.Next(9002, 10602) / 10000.0;
+            double ambient = (double)r.Next(Ambient1, Ambient2) / 10000.0;
+            if (r.Next(1, 1000) > 700)
+                ambient = (double)r.Next(Ambient1 - 1500 , Ambient2 - 500) / 10000.0;
+            double level = (double)r.Next(Level1, Level2) / 10000.0;
+            double red = (double)r.Next(Red1, Red2) / 10000.0;
+            double green = (double)r.Next(Green1, Green2) / 10000.0;
+            double blue = (double)r.Next(Blue1, Blue2) / 10000.0;
 
-            double wambient = (double)r.Next(3000, 6000) / 10000.0;
-            double wlevel = (double)r.Next(120, 320) / 10000.0;
-            double wred = (double)r.Next(7000, 8500) / 10000.0;
-            double wgreen = (double)r.Next(7500, 8800) / 10000.0;
-            double wblue = (double)r.Next(9800, 12000) / 10000.0;
+            double wambient = (double)r.Next(IonAmbient1, IonAmbient2) / 10000.0;
+            double wlevel = (double)r.Next(IonLevel1, IonLevel2) / 10000.0;
+            double wred = (double)r.Next(IonRed1, IonRed2) / 10000.0;
+            double wgreen = (double)r.Next(IonGreen1, IonGreen2) / 10000.0;
+            double wblue = (double)r.Next(IonBlue1, IonBlue2) / 10000.0;
 
             lighting.SetStringValue("Ambient", String.Format("{0:0.000000}", ambient));
             lighting.SetStringValue("Level", String.Format("{0:0.000000}", level));
@@ -598,7 +724,7 @@ namespace RandomMapGenerator
             MapFile.WriteIniFile();
         }*/
     
-        public void RenderMapAndGeneratePreview(string path)
+        public void RenderMap(string path)
         {
             path = Program.ProgramFolder + "\\" + path;
             Log.Information("******************************************************");
@@ -608,7 +734,7 @@ namespace RandomMapGenerator
             MapRenderer.StartInfo.FileName = Program.RenderderPath;
             MapRenderer.StartInfo.UseShellExecute = false;
             MapRenderer.StartInfo.CreateNoWindow = true;
-            MapRenderer.StartInfo.Arguments = $@"-i ""{path}"" -p -o ""{outputName}"" -m ""{Program.GameFolder.Trim('\\')}"" -r --mark-start-pos -s=4 --preview-markers-selected -z +(1500,0)"; //"-i \"" + path + "\" -p -o \"" + outputName + "\" -m \"" + Program.GameFolder + "\" -r --mark-start-pos --preview-markers-selected";
+            MapRenderer.StartInfo.Arguments = $@"-i ""{path}"" -p -o ""{outputName}"" -m ""{Program.GameFolder.Trim('\\')}"" -r --mark-start-pos -s=4  -z +(1500,0)"; //--preview-markers-selected
             MapRenderer.Start();
             while (!MapRenderer.HasExited) { }
             Log.Information("Image is saved as " + outputName + ".png");

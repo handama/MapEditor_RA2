@@ -21,6 +21,12 @@ namespace RandomMapGenerator
         public bool HasSmudge { get; set; }
         public bool HasTerrain { get; set; }
         public bool HasOverlay { get; set; }
+        public bool HasBridge { get; set; }
+        public int OverlayID { get; set; }
+        public int OverlayValue { get; set; }
+        public string TerrainName { get; set; }
+        public bool AroundPlayerLocation { get; set; }
+        public bool HasNeuralTechStructure { get; set; }
         public void Initialize(int x, int y)
         {
             X = x;
@@ -57,6 +63,12 @@ namespace RandomMapGenerator
             HasSmudge = false;
             HasTerrain = false;
             HasOverlay = false;
+            OverlayID = 0;
+            OverlayValue = 0;
+            TerrainName = "";
+            AroundPlayerLocation = false;
+            HasBridge = false;
+            HasNeuralTechStructure = false;
         }
         public void SetProperty(int x, int y, int z, TileInfo.AbstractTileType absTileType)
         {

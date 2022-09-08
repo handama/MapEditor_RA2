@@ -56,11 +56,11 @@ namespace RandomMapGenerator
         [Option("ep", Required = false, HelpText = "在正东方向放置玩家（参数=数量）")]
         public int E { get; set; }
 
-        [Option("no-thumbnail", Default = false ,Required = false, HelpText = "不渲染地图全图（同时不会生成载入缩略图）")]
+        [Option("no-thumbnail", Default = false ,Required = false, HelpText = "不渲染地图全图")]
         public bool NoThumbnail { get; set; }
 
-        [Option("no-thumbnail-output", Default = false, Required = false, HelpText = "不输出地图全图，但是会生成载入缩略图")]
-        public bool NoThumbnailOutput { get; set; }
+        //[Option("no-thumbnail-output", Default = false, Required = false, HelpText = "不输出地图全图，但是会生成载入缩略图")]
+        //public bool NoThumbnailOutput { get; set; }
 
         [Option('t' ,"total-random", Required = false, HelpText = "完全随机的产生地图（参数=生成数量）")]
         public int TotalRandom { get; set; }
@@ -98,7 +98,7 @@ namespace RandomMapGenerator
                 return;
             }
 
-            Log.Logger = new LoggerConfiguration().WriteTo.File(@".\log\"+"log-.txt", rollingInterval: RollingInterval.Minute).CreateLogger(); //.MinimumLevel.Warning()
+            Log.Logger = new LoggerConfiguration().WriteTo.File(@".\log\"+"log-.txt", rollingInterval: RollingInterval.Minute).CreateLogger(); //.MinimumLevel.Error()
 
 
             var result = Parser.Default.ParseArguments<Options>(args)
@@ -359,6 +359,7 @@ namespace RandomMapGenerator
                 {
                     WorkingMap.RandomPlaceSmudge(option.Smudge); //not stable
                 }
+                WorkingMap.ReadyForMiniMap();
 
                 mapFile.Width = WorkingMap.Width;
                 mapFile.Height = WorkingMap.Height;
@@ -375,7 +376,7 @@ namespace RandomMapGenerator
 
                 mapFile.SaveFullMap(fullPath);
 
-                mapFile.CorrectPreviewSize(fullPath);
+                //mapFile.CorrectPreviewSize(fullPath);
                 mapFile.CalculateStartingWaypoints(fullPath);
                 mapFile.RandomSetLighting(fullPath);
                 mapFile.ChangeGamemode(fullPath, option.Gamemode);
@@ -390,14 +391,18 @@ namespace RandomMapGenerator
                     mapFile.ChangeName(fullPath, internalNameRandom);
                 }
                 
-                if (option.NoThumbnailOutput)
+               /* if (option.NoThumbnailOutput)
                 {
                     mapFile.GeneratePreview(fullPath);
                     option.NoThumbnail = true;
-                }
+                }*/
 
                 if (!option.NoThumbnail)
-                    mapFile.RenderMapAndGeneratePreview(fullPath);
+                    mapFile.RenderMap(fullPath);
+
+
+                
+                mapFile.CreateBitMapbyMap(fullPath);
 
 
                 mapFile.AddComment(fullPath);
@@ -411,6 +416,7 @@ namespace RandomMapGenerator
                         break;
                 }
             }
+            WorkingMap.CountMapUnitUsage();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -989,6 +990,8 @@ namespace RandomMapGenerator
         public byte Z;//1 bytes
         public short TileNum;//16-bit
         public byte SubTile;//1 bytes
+        public Color RadarLeft = Color.White;
+        public Color RadarRight = Color.White;
 
         public IsoTile(ushort p1, ushort p2, ushort rx, ushort ry, byte z, short tilenum, byte subtile)
         {
