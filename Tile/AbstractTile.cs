@@ -38,10 +38,10 @@ namespace RandomMapGenerator
             bool isOnMap = false;
             bool isOnVisibleMap = false;
             Used = true;
-            if (Y > WorkingMap.Size[0] - X + 3
-                && Y < 2 * WorkingMap.Size[1] + WorkingMap.Size[0] + 1 - X - 4
-                && Y < X + WorkingMap.Size[0] - 2
-                && Y > X - WorkingMap.Size[0] + 2)
+            if (Y > WorkingMap.Size[0] - X + 4
+                && Y < 2 * WorkingMap.Size[1] + WorkingMap.Size[0] + 1 - X - 1 - WorkingMap.BottomSpace
+                && Y < X + WorkingMap.Size[0] - 3
+                && Y > X - WorkingMap.Size[0] + 3)
             {
                 isOnVisibleMap = true;
             }

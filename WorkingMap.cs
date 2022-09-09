@@ -40,8 +40,8 @@ namespace RandomMapGenerator
         public static IniFile Rules { get; private set; }
         public static IniFile Art { get; private set; }
         public static List<AbstractTileType> CannotPlaceSmudgeList { get; private set; }
-
         public static Random Randomizer { get; private set; }
+        public static int BottomSpace { get; private set; }
 
         public static void SterilizeMapUnit(string path)
         {
@@ -114,6 +114,8 @@ namespace RandomMapGenerator
 
             Rules = new IniFile(Program.RulesPath);
             Art = new IniFile(Program.ArtPath);
+
+            BottomSpace = settings.GetIntValue("settings", "BottomSpace", 4);
 
 
             string theater = settings.GetStringValue("settings", "Theater", "NEWURBAN");
@@ -189,7 +191,7 @@ namespace RandomMapGenerator
                     if (!AbstractMapMemberMatrix[i, j].IsOnMap)
                         AbstractMapMemberMatrix[i, j].Placed = true;
 
-                    if (IsValidAUM(i,j -1))
+                    if (IsValidAMMM(i,j -1))
                     {
                         if (!AbstractMapMemberMatrix[i, j - 1].IsOnMap)
                             AbstractMapMemberMatrix[i, j].NEConnected = true;
@@ -197,7 +199,7 @@ namespace RandomMapGenerator
                     else
                         AbstractMapMemberMatrix[i, j].NEConnected = true;
 
-                    if (IsValidAUM(i, j + 1))
+                    if (IsValidAMMM(i, j + 1))
                     {
                         if (!AbstractMapMemberMatrix[i, j + 1].IsOnMap)
                             AbstractMapMemberMatrix[i, j].SWConnected = true;
@@ -205,7 +207,7 @@ namespace RandomMapGenerator
                     else
                         AbstractMapMemberMatrix[i, j].SWConnected = true;
 
-                    if (IsValidAUM(i - 1, j))
+                    if (IsValidAMMM(i - 1, j))
                     {
                         if (!AbstractMapMemberMatrix[i - 1, j].IsOnMap)
                             AbstractMapMemberMatrix[i, j].NWConnected = true;
@@ -213,7 +215,7 @@ namespace RandomMapGenerator
                     else
                         AbstractMapMemberMatrix[i, j].NWConnected = true;
 
-                    if (IsValidAUM(i + 1, j))
+                    if (IsValidAMMM(i + 1, j))
                     {
                         if (!AbstractMapMemberMatrix[i + 1, j].IsOnMap)
                             AbstractMapMemberMatrix[i, j].SEConnected = true;
@@ -224,7 +226,7 @@ namespace RandomMapGenerator
             }
 
         }
-        public static bool IsValidAUM(int x, int y)
+        public static bool IsValidAMMM(int x, int y)
         {
             if (x < AbstractMapMemberMatrix.GetLength(0) && x >= 0 && y < AbstractMapMemberMatrix.GetLength(1) && y >= 0)
                 return true;
@@ -268,19 +270,19 @@ namespace RandomMapGenerator
         {
             //order : NE NW SW SE
             var absMapMember = new AbstractMapMember[4];
-            if (IsValidAUM(x, y - 1))
+            if (IsValidAMMM(x, y - 1))
             {
                 absMapMember[0] = AbstractMapMemberMatrix[x, y - 1];
             }
-            if (IsValidAUM(x - 1, y))
+            if (IsValidAMMM(x - 1, y))
             {
                 absMapMember[1] = AbstractMapMemberMatrix[x - 1, y];
             }
-            if (IsValidAUM(x, y + 1))
+            if (IsValidAMMM(x, y + 1))
             {
                 absMapMember[2] = AbstractMapMemberMatrix[x, y + 1];
             }
-            if (IsValidAUM(x + 1, y))
+            if (IsValidAMMM(x + 1, y))
             {
                 absMapMember[3] = AbstractMapMemberMatrix[x + 1, y];
             }
@@ -566,7 +568,7 @@ namespace RandomMapGenerator
         }
         public static void SetMapUnit(int x, int y, string mapUnitName)
         {
-            if (IsValidAUM(x,y))
+            if (IsValidAMMM(x,y))
             {
                 AbstractMapMemberMatrix[x, y].MapUnitName = mapUnitName;
                 AbstractMapMemberMatrix[x, y].Placed = true;
@@ -576,7 +578,7 @@ namespace RandomMapGenerator
 
         public static void SetMapUnitTest(int x, int y, string mapUnitName)
         {
-            if (IsValidAUM(x, y))
+            if (IsValidAMMM(x, y))
             {
                 AbstractMapMemberMatrix[x, y].MapUnitName = mapUnitName;
                 AbstractMapMemberMatrix[x, y].Placed = true;
@@ -584,7 +586,7 @@ namespace RandomMapGenerator
         }
         public static void DeleteMapUnitTest(int x, int y)
         {
-            if (IsValidAUM(x, y))
+            if (IsValidAMMM(x, y))
             {
                 AbstractMapMemberMatrix[x, y].MapUnitName = "empty";
                 AbstractMapMemberMatrix[x, y].Placed = false;
@@ -636,6 +638,64 @@ namespace RandomMapGenerator
             SetMapUnit(x, y, randomizer.NextWithReplacement());
         }
 
+        public static int[] MovePositionCloseToCenter(int x, int y)
+        {
+            int[] centerL = GetCentralAbsMapMemberLocation();
+            if (x < centerL[0])
+                x++;
+            else if (x > centerL[0])
+                x--;
+
+            if (y < centerL[0])
+                y++;
+            else if (y > centerL[0])
+                y--;
+
+            return new int[2] { x, y };
+        }
+
+        public static void RandomSetMapUnitNoOverlap(int x, int y, List<string> mapUnitName)
+        {
+            int[,] group = new int[8,2]
+            {
+                { x - 1, y - 1},
+                { x - 1, y},
+                { x - 1, y + 1},
+                { x, y - 1},
+                { x, y + 1},
+                { x + 1, y - 1},
+                { x + 1, y},
+                { x + 1, y + 1},
+            };
+            if (AbstractMapMemberMatrix[x,y].Placed || !AbstractMapMemberMatrix[x, y].IsAllOnVisibleMap)
+            {
+
+                for (int i = 0; i < group.GetLength(0); i++)
+                {
+                    if (IsValidAMMM(group[i, 0], group[i, 1]))
+                    {
+                        if (!AbstractMapMemberMatrix[group[i, 0], group[i, 1]].Placed && AbstractMapMemberMatrix[group[i, 0], group[i, 1]].IsAllOnVisibleMap)
+                        {
+                            RandomSetMapUnit(group[i, 0], group[i, 1], mapUnitName);
+                            return;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                RandomSetMapUnit(x, y, mapUnitName);
+                return;
+            }
+            int newX = MovePositionCloseToCenter(x, y)[0];
+            int newY = MovePositionCloseToCenter(x, y)[1];
+
+            int[] centerL = GetCentralAbsMapMemberLocation();
+
+            if (newX != centerL[0] || newY != centerL[1])
+                RandomSetMapUnitNoOverlap(newX, newY, mapUnitName);
+        }
+
         public static void RecordPlacedMapUnit(int x, int y)
         {
             int[] record = { x, y };
@@ -643,7 +703,7 @@ namespace RandomMapGenerator
         }
         public static void DeleteMapUnit(int x, int y)
         {
-            if (IsValidAUM(x, y))
+            if (IsValidAMMM(x, y))
             {
                 AbstractMapMemberMatrix[x, y].MapUnitName = "empty";
                 AbstractMapMemberMatrix[x, y].Placed = false;
@@ -1175,7 +1235,7 @@ namespace RandomMapGenerator
                 for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                 {
                     AbstractMapMemberMatrix[i, j].Entropy = 50;
-                    if (IsValidAUM(i, j - 1))
+                    if (IsValidAMMM(i, j - 1))
                     {
                         if (AbstractMapMemberMatrix[i, j - 1].MapUnitName != "empty")
                         {
@@ -1183,7 +1243,7 @@ namespace RandomMapGenerator
                             AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
-                    if (IsValidAUM(i, j + 1))
+                    if (IsValidAMMM(i, j + 1))
                     {
                         if (AbstractMapMemberMatrix[i, j + 1].MapUnitName != "empty")
                         {
@@ -1191,7 +1251,7 @@ namespace RandomMapGenerator
                             AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
-                    if (IsValidAUM(i - 1, j))
+                    if (IsValidAMMM(i - 1, j))
                     {
                         if (AbstractMapMemberMatrix[i - 1, j].MapUnitName != "empty")
                         {
@@ -1199,7 +1259,7 @@ namespace RandomMapGenerator
                             AbstractMapMemberMatrix[i, j].Entropy -= 10;
                         }
                     }
-                    if (IsValidAUM(i + 1, j))
+                    if (IsValidAMMM(i + 1, j))
                     {
                         if (AbstractMapMemberMatrix[i + 1, j].MapUnitName != "empty")
                         {
@@ -1312,7 +1372,7 @@ namespace RandomMapGenerator
                 {
                     for (int j = 0; j < AbstractMapMemberMatrix.GetLength(1); j++)
                     {
-                        if (IsValidAUM(i, j) && IsValidAUM(i, j + length - 1))
+                        if (IsValidAMMM(i, j) && IsValidAMMM(i, j + length - 1))
                         {
                             if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j + length - 1].IsAllOnVisibleMap)
                             {
@@ -1331,7 +1391,7 @@ namespace RandomMapGenerator
                 {
                     for (int j = AbstractMapMemberMatrix.GetLength(0) - 1; j >= 0; j--)
                     {
-                        if (IsValidAUM(j, i) && IsValidAUM(j - length + 1, i))
+                        if (IsValidAMMM(j, i) && IsValidAMMM(j - length + 1, i))
                         {
                             if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j - length + 1, i].IsAllOnVisibleMap)
                             {
@@ -1350,7 +1410,7 @@ namespace RandomMapGenerator
                 {
                     for (int j = 0 ; j < AbstractMapMemberMatrix.GetLength(0) ; j++)
                     {
-                        if (IsValidAUM(j, i) && IsValidAUM(j + length - 1, i))
+                        if (IsValidAMMM(j, i) && IsValidAMMM(j + length - 1, i))
                         {
                             if (AbstractMapMemberMatrix[j, i].IsAllOnVisibleMap && AbstractMapMemberMatrix[j + length - 1, i].IsAllOnVisibleMap)
                             {
@@ -1369,7 +1429,7 @@ namespace RandomMapGenerator
                 {
                     for (int j = AbstractMapMemberMatrix.GetLength(1) - 1; j >= 0; j--)
                     {
-                        if (IsValidAUM(i, j) && IsValidAUM(i, j - length + 1))
+                        if (IsValidAMMM(i, j) && IsValidAMMM(i, j - length + 1))
                         {
                             if (AbstractMapMemberMatrix[i, j].IsAllOnVisibleMap && AbstractMapMemberMatrix[i, j - length + 1].IsAllOnVisibleMap)
                             {
@@ -1721,7 +1781,7 @@ namespace RandomMapGenerator
             {
                 for (int i = 0; i < number; i++)
                 {
-                    RandomSetMapUnit(playerLocation[0], playerLocation[1] + i, startingUnits);
+                    RandomSetMapUnitNoOverlap(playerLocation[0], playerLocation[1] + i, startingUnits);
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1] + i);
                 }
             }
@@ -1729,7 +1789,7 @@ namespace RandomMapGenerator
             {
                 for (int i = 0; i < number; i++)
                 {
-                    RandomSetMapUnit(playerLocation[0] + i, playerLocation[1], startingUnits);
+                    RandomSetMapUnitNoOverlap(playerLocation[0] + i, playerLocation[1], startingUnits);
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + i, playerLocation[1]);
                 }
             }
@@ -1737,7 +1797,7 @@ namespace RandomMapGenerator
             {
                 for (int i = 0; i < number; i++)
                 {
-                    RandomSetMapUnit(playerLocation[0], playerLocation[1] - i, startingUnits);
+                    RandomSetMapUnitNoOverlap(playerLocation[0], playerLocation[1] - i, startingUnits);
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1] - i);
                 }
             }
@@ -1745,112 +1805,112 @@ namespace RandomMapGenerator
             {
                 for (int i = 0; i < number; i++)
                 {
-                    RandomSetMapUnit(playerLocation[0] - i, playerLocation[1], startingUnits);
+                    RandomSetMapUnitNoOverlap(playerLocation[0] - i, playerLocation[1], startingUnits);
                     Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - i, playerLocation[1]);
                 }
             }
             if (direction == "N")
             {
-                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0], playerLocation[1], startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
                 if (number == 1)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] - 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] + 1, playerLocation[1] - 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] - 1);
                 if (number == 2)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] + 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] - 1, playerLocation[1] + 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] + 1);
                 if (number == 3)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] + 2, playerLocation[1] - 2, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] + 2, playerLocation[1] - 2, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 2, playerLocation[1] - 2);
             }
             else if (direction == "W")
             {
-                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0], playerLocation[1], startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
                 if (number == 1)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] - 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] - 1, playerLocation[1] - 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] - 1);
                 if (number == 2)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] + 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] + 1, playerLocation[1] + 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] + 1);
                 if (number == 3)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] - 2, playerLocation[1] - 2, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] - 2, playerLocation[1] - 2, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 2, playerLocation[1] - 2);
             }
             else if (direction == "S")
             {
-                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0], playerLocation[1], startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
                 if (number == 1)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] + 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] - 1, playerLocation[1] + 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] + 1);
                 if (number == 2)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] - 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] + 1, playerLocation[1] - 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] - 1);
                 if (number == 3)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] - 2, playerLocation[1] + 2, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] - 2, playerLocation[1] + 2, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 2, playerLocation[1] + 2);
             }
             else if (direction == "E")
             {
-                RandomSetMapUnit(playerLocation[0], playerLocation[1], startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0], playerLocation[1], startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0], playerLocation[1]);
                 if (number == 1)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] + 1, playerLocation[1] + 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] + 1, playerLocation[1] + 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 1, playerLocation[1] + 1);
                 if (number == 2)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] - 1, playerLocation[1] - 1, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] - 1, playerLocation[1] - 1, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] - 1, playerLocation[1] - 1);
                 if (number == 3)
                 {
                     PlaceTiberiumMUNearPlayer();
                     return;
                 }
-                RandomSetMapUnit(playerLocation[0] + 2, playerLocation[1] + 2, startingUnits);
+                RandomSetMapUnitNoOverlap(playerLocation[0] + 2, playerLocation[1] + 2, startingUnits);
                 Log.Information("Player is set in abstract map member [{0},{1}]", playerLocation[0] + 2, playerLocation[1] + 2);
             }
             PlaceTiberiumMUNearPlayer();
@@ -1986,13 +2046,13 @@ namespace RandomMapGenerator
                 return false;
             var result = randomizer.NextWithReplacement();
             if (result == 1)
-                RandomSetMapUnit(x, y - 1, mapUnitName);
+                RandomSetMapUnitNoOverlap(x, y - 1, mapUnitName);
             if (result == 2)
-                RandomSetMapUnit(x - 1, y, mapUnitName);
+                RandomSetMapUnitNoOverlap(x - 1, y, mapUnitName);
             if (result == 3)
-                RandomSetMapUnit(x, y + 1, mapUnitName);
+                RandomSetMapUnitNoOverlap(x, y + 1, mapUnitName);
             if (result == 4)
-                RandomSetMapUnit(x + 1, y, mapUnitName);
+                RandomSetMapUnitNoOverlap(x + 1, y, mapUnitName);
             return true;
         }
 
