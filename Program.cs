@@ -404,6 +404,7 @@ namespace RandomMapGenerator
                 
                 mapFile.CreateBitMapbyMap(fullPath);
 
+                mapFile.ChangeDigest(fullPath);
 
                 mapFile.AddComment(fullPath);
 

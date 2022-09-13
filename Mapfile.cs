@@ -322,6 +322,28 @@ namespace RandomMapGenerator
         }
 
 
+        public void ChangeDigest(string path)
+        {
+            var map = new IniFile(path);
+
+            if (map.SectionExists("Digest"))
+                map.RemoveSection("Digest");
+
+            map.AddSection("Digest");
+            var section = map.GetSection("Digest");
+
+            var r = new Random();
+            byte[] digest = new byte[20];
+            for (int i = 0; i < 20; i++)
+            {
+                byte b = Convert.ToByte(r.Next(16));
+                digest[i] = b;
+            }
+
+            section.SetStringValue("1", Convert.ToBase64String(digest));
+
+            map.WriteIniFile();
+        }
         public void SaveFullMap(string path)
         {
             var fullMap = new IniFile(Program.TemplateMap);
