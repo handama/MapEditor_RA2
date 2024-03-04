@@ -244,10 +244,10 @@ namespace RandomMapGenerator
         public static bool IsOnMapAT(int x, int y)
         {
             bool isOnMap = false;
-            if (y > Size[0] - x - 1
-                && y < 2 * Size[1] + Size[0] - x
-                && y < x + Size[0] + 1
-                && y > x - Size[0] - 1)
+            if (y + x > Width
+                && x + y < 2 * Height + Width + 1
+                && y - x < Width
+                && x - y < Width)
             {
                 isOnMap = true;
             }
